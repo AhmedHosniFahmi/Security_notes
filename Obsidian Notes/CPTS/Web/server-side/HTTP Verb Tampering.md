@@ -10,12 +10,17 @@
 	* [[#Insecure Coding]]
 ---
 ## Overview
-[HTTP Verb Tampering](https://owasp.org/www-project-web-security-testing-guide/v41/4-Web_Application_Security_Testing/07-Input_Validation_Testing/03-Testing_for_HTTP_Verb_Tampering). 
-* This can be exploited by sending malicious requests using unexpected methods, which may lead to bypassing the web application's authorization mechanism or even bypassing its security controls against other web attacks.
-* **Two things can cause the HTTP verb tampering vulnerability**:
-	1. ***Insecure web server configurations***. A web server's authentication configuration may be limited to specific HTTP methods, which would leave some HTTP methods accessible without authentication.
-	2. ***Insecure Coding***. This can occur when a web developer applies specific filters to mitigate particular vulnerabilities while not covering all HTTP methods with that filter.
-* Automated tools can spot the HTTP verb tampering that has been caused by insecure web server configurations, While the other one needs active testing. 
+[HTTP Verb Tampering](https://owasp.org/www-project-web-security-testing-guide/v41/4-Web_Application_Security_Testing/07-Input_Validation_Testing/03-Testing_for_HTTP_Verb_Tampering)
+- Cause: HTTP Verb Tampering occurs when an application has inconsistent or incomplete access control checks across different HTTP methods. For example, a resource may have proper authorization checks for `POST` requests but not for `PUT` or `DELETE` requests.
+- Exploitation: Attackers send requests with unexpected or modified HTTP verbs (e.g., using `PUT` or `DELETE` instead of `GET` or `POST`) to interact with resources in unintended ways. For example, an attacker might change a `GET` request to `DELETE` to attempt deleting data or bypass access restrictions.
+- Impact:
+    - Unauthorized Data Modification
+    - Privilege Escalation
+    - Information Disclosure
+- Prevention:
+    - Consistent Access Control: Ensure that authorization checks are applied uniformly across all HTTP methods for each resource.
+    - Allow Only Required Verbs: Restrict endpoints to allow only the HTTP verbs necessary for their functionality.
+    - Server-Side Validation: Validate requests server-side based on user roles and permissions, regardless of HTTP verb.
 ---
 ## HTTP Verbs
 
@@ -43,6 +48,27 @@ Allow: POST,OPTIONS,HEAD,GET
 Content-Length: 0
 Content-Type: httpd/unix-directory
 ```
+Script for automation:
+``` bash
+#!/bin/bash
+for webservmethod in GET POST PUT TRACE CONNECT OPTIONS PROPFIND;
+do
+printf "$webservmethod " ;
+printf "$webservmethod / HTTP/1.1\nHost: $1\n\n" | nc -q 1 $1 80 | grep "HTTP/1.1"
+done
+```
+Usage:
+``` bash
+k1ng0a21r@htb[/htb]$ ./script 123.1.3.4
+GET HTTP/1.1 200 OK
+POST HTTP/1.1 200 OK
+PUT HTTP/1.1 200 OK
+TRACE HTTP/1.1 200 OK
+CONNECT HTTP/1.1 400 Bad Request
+OPTIONS HTTP/1.1 200 OK
+PROPFIND HTTP/1.1 200 OK
+```
+
 ---
 ## Scenarios
 ### Bypassing Basic Authentication
