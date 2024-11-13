@@ -11,13 +11,13 @@
 ---
 ## Overview
 [HTTP Verb Tampering](https://owasp.org/www-project-web-security-testing-guide/v41/4-Web_Application_Security_Testing/07-Input_Validation_Testing/03-Testing_for_HTTP_Verb_Tampering)
-- Cause: HTTP Verb Tampering occurs when an application has inconsistent or incomplete access control checks across different HTTP methods. For example, a resource may have proper authorization checks for `POST` requests but not for `PUT` or `DELETE` requests.
-- Exploitation: Attackers send requests with unexpected or modified HTTP verbs (e.g., using `PUT` or `DELETE` instead of `GET` or `POST`) to interact with resources in unintended ways. For example, an attacker might change a `GET` request to `DELETE` to attempt deleting data or bypass access restrictions.
-- Impact:
+- **Cause**: HTTP Verb Tampering occurs when an application has inconsistent or incomplete access control checks across different HTTP methods. For example, a resource may have proper authorization checks for `POST` requests but not for `PUT` or `DELETE` requests.
+- **Exploitation**: Attackers send requests with unexpected or modified HTTP verbs (e.g., using `PUT` or `DELETE` instead of `GET` or `POST`) to interact with resources in unintended ways. For example, an attacker might change a `GET` request to `DELETE` to attempt deleting data or bypass access restrictions.
+- **Impact**:
     - Unauthorized Data Modification
     - Privilege Escalation
     - Information Disclosure
-- Prevention:
+- **Prevention**:
     - Consistent Access Control: Ensure that authorization checks are applied uniformly across all HTTP methods for each resource.
     - Allow Only Required Verbs: Restrict endpoints to allow only the HTTP verbs necessary for their functionality.
     - Server-Side Validation: Validate requests server-side based on user roles and permissions, regardless of HTTP verb.

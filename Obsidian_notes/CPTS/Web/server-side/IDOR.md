@@ -7,13 +7,13 @@
 ---
 ## Overview
 [Insecure Direct Object References (IDOR)](https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/05-Authorization_Testing/04-Testing_for_Insecure_Direct_Object_References)
-- Cause: IDOR vulnerabilities arise when applications reference objects directly (e.g., using unique IDs in URLs) without verifying that the user has permission to access or modify those objects.
-- Exploitation: Attackers manipulate parameters in requests (like changing a user ID or file ID in a URL) to access or modify resources that they should not be able to access. For example, changing `https://example.com/user/123` to `https://example.com/user/124` could allow one user to view another user's profile.
-- Impact
+- **Cause**: IDOR vulnerabilities arise when applications reference objects directly (e.g., using unique IDs in URLs) without verifying that the user has permission to access or modify those objects.
+- **Exploitation**: Attackers manipulate parameters in requests (like changing a user ID or file ID in a URL) to access or modify resources that they should not be able to access. For example, changing `https://example.com/user/123` to `https://example.com/user/124` could allow one user to view another user's profile.
+- **Impact**:
     - Unauthorized Data Access
     - Data Modification
     - Privilege Escalation
-- Prevention:
+- **Prevention**:
     - Access Control Checks: Enforce access controls on the server side, validating that users have permission to access specific objects.
     - Avoid Direct References: Use indirect references (e.g., mapped tokens) to objects instead of predictable IDs that users can manipulate.
     - Logging and Monitoring: Track and log access to sensitive resources to detect and respond to unusual access patterns.
