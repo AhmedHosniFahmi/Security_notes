@@ -3,8 +3,8 @@
 	* [[Hydra]]
 	* [[Medusa]]
 * [[#Custom Wordlists]]
-	* Username Anarchy
-	* CUPP
+	* Create personalized **username** wordlists using [Username Anarchy](https://github.com/urbanadventurer/username-anarchy.git)
+	* Create personalized **password** wordlists using [CUPP](https://github.com/Mebus/cupp)
 * [[#Edit a wordlist to be tailored to a specific policy with grep]]
 * [[#Types of Brute Forcing]]
 * [[#HTB Module Answers]]
@@ -22,15 +22,13 @@ Suppose we have this policy:
 ```
 ---
 ## Custom Wordlists
-* **Username Anarchy** `https://github.com/urbanadventurer/username-anarchy.git`
-Create personalized username wordlists
+* **Username Anarchy** 
 ``` bash
 sudo apt install ruby -y
 git clone https://github.com/urbanadventurer/username-anarchy.git
 ./username-anarchy john doe > john_doe_usernames.txt
 ```
-* **CUPP** (Common User Passwords Profiler)
-Create personalized password wordlists that leverage the gathered intelligence about your target.
+* **CUPP**
 ``` bash
 cupp -i
 ```
