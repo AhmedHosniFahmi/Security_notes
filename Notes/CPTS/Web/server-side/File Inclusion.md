@@ -1,22 +1,22 @@
 ### Content
-* [[#Overview]]
-* [[#Local file inclusion]] (LFI)
+* [Overview](#overview)
+* [Local file inclusion](#local-file-inclusion) (LFI)
 	* Path Traversal
 	* Second-Order Attacks
-* [[#Bypasses Techniques]]
+* [Bypasses Techniques](#bypasses-techniques)
 	* Non-Recursive Path Traversal Filters
 	* Encoding
 	* Approved Paths
 	* Appended Extension
 	* Filename Prefix
-* [[#PHP Filters]]
-	* [[#Scenarios]]
+* [PHP Filters](#php-filters)
+	* [Scenarios](#scenarios)
 		* Reading PHP files with convert filter
 * From LFI to RCE
 	* PHP Wrappers
 		* Data / Input / Expect
-	* [[#Remote File Inclusion]] (RFI)
-* [[#Read, Write and Execute Functions]]
+	* [Remote File Inclusion](#remote-file-inclusion) (RFI)
+* [Read, Write and Execute Functions](#read-write-and-execute-functions)
 ---
 ## Overview
 - **Types of File Inclusion**:
@@ -97,7 +97,7 @@ If we were not sure of the directory the web application is in, we can add `../`
 		configure               [Status: 302, Size: 0, Words: 1, Lines: 1, Duration: 69ms]
 		```
 	2.  We should use the payload `configure`: `www.example.com/index.php?lang=configure`
-		1. If the web app uses a [[#Read, Write and Execute Functions]] that executes the content of the file, it won't show the file content.
+		1. If the web app uses a [Read, Write and Execute Functions](#read-write-and-execute-functions) that executes the content of the file, it won't show the file content.
 		2. Using PHP wrapper with convert filter to encode the content of the file so it doesn't get executed
 		   `www.example.com/index.php?lang=php://filter/read=convert.base64-encode/resource=config`
 		3. Decode the output
@@ -141,7 +141,7 @@ If we were not sure of the directory the web application is in, we can add `../`
 			curl -s "http://<SERVER_IP>:<PORT>/index.php?language=expect://id"
 			```
 - **Remote File Inclusion**:
-	- Any RFI vulnerability is also an LFI vulnerability, but an LFI may not necessarily be an RFI. Check [[#Read, Write and Execute Functions]]
+	- Any RFI vulnerability is also an LFI vulnerability, but an LFI may not necessarily be an RFI. Check [Read, Write and Execute Functions](#read-write-and-execute-functions)
 	- Remote URL inclusion in `PHP` require the `allow_url_include` setting to be enabled.
 	- 
 ---

@@ -2,12 +2,12 @@
 * Tools:
 	* [[Hydra]]
 	* [[Medusa]]
-* [[#Custom Wordlists]]
+* [Custom Wordlists](#custom-wordlists)
 	* Create personalized **username** wordlists using [Username Anarchy](https://github.com/urbanadventurer/username-anarchy.git)
 	* Create personalized **password** wordlists using [CUPP](https://github.com/Mebus/cupp)
-* [[#Edit a wordlist to be tailored to a specific policy with grep]]
-* [[#Types of Brute Forcing]]
-* [[#HTB Module Answers]]
+* [Edit a wordlist to be tailored to a specific policy with grep](#edit-a-wordlist-to-be-tailored-to-a-specific-policy-with-grep)
+* [Types of Brute Forcing](#types-of-brute-forcing)
+* [HTB Module Answers](#htb-module-answers)
 ---
 ## Edit a wordlist to be tailored to a specific policy with grep
 Suppose we have this policy:

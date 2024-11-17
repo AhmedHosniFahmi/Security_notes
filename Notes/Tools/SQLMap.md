@@ -1,15 +1,15 @@
 ### Content 
-* [[#Database Enumeration]]
-	* [[#Privileges enumeration]]
-	* [[#Full DB enumeration]]
-	* [[#Table enumeration]]
-	* [[#Searching for data]]
-	* [[#Password Enumeration and Cracking]] 
-* [[#Anti-Virus bypass techniques]]
-* [[#OS Exploitation]]
-	* [[#File Read/Write]]
-	* [[#OS Command Execution]]
-* [[#HTB module answers]]
+* [Database Enumeration](#database-enumeration)
+	* [Privileges enumeration](#privileges-enumeration)
+	* [Full DB enumeration](#full-db-enumeration)
+	* [Table enumeration](#table-enumeration)
+	* [Searching for data](#searching-for-data)
+	* [Password Enumeration and Cracking](#password-enumeration-and-cracking) 
+* [Anti-Virus bypass techniques](#anti-virus-bypass-techniques)
+* [OS Exploitation](#os-exploitation)
+	* [File Read/Write](#file-read/write)
+	* [OS Command Execution](#os-command-execution)
+* [HTB module answers](#htb-module-answers)
 ---
 ## Database Enumeration
 #### Privileges enumeration

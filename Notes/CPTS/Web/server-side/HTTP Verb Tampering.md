@@ -1,13 +1,13 @@
 ### Content
-* [[#Overview]]
-* [[#HTTP Verbs]]
-* [[#Check allowed methods by a server]]
-* [[#Scenarios]]
-	* [[#Bypassing Basic Authentication]]
-	* [[#Bypassing Security Filters]]
-* [[#Verb Tampering Prevention]]
-	* [[#Insecure Configuration]]
-	* [[#Insecure Coding]]
+* [Overview](#overview)
+* [HTTP Verbs](#http-verbs)
+* [Check allowed methods by a server](#check-allowed-methods-by-a-server)
+* [Scenarios](#scenarios)
+	* [Bypassing Basic Authentication](#bypassing-basic-authentication)
+	* [Bypassing Security Filters](#bypassing-security-filters)
+* [Verb Tampering Prevention](#verb-tampering-prevention)
+	* [Insecure Configuration](#insecure-configuration)
+	* [Insecure Coding](#insecure-coding)
 ---
 ## Overview
 [HTTP Verb Tampering](https://owasp.org/www-project-web-security-testing-guide/v41/4-Web_Application_Security_Testing/07-Input_Validation_Testing/03-Testing_for_HTTP_Verb_Tampering)

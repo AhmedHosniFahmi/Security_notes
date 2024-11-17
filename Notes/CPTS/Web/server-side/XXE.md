@@ -1,14 +1,14 @@
 ### Content
-* [[#Overview]]
-* [[#Local File Disclosure]]
-	* [[#Read file contains some of XML's special characters]]
-		* [[#Read PHP files using PHP wrapper]]
-		* [[#Advanced Exfiltration with CDATA]] **(for any web application backend using XML Parameters entities)**
-* [[#Remote Code Execution]]
+* [Overview](#overview)
+* [Local File Disclosure](#local-file-disclosure)
+	* [Read file contains some of XML's special characters](#read-file-contains-some-of-xml's-special-characters)
+		* [Read PHP files using PHP wrapper](#read-php-files-using-php-wrapper)
+		* [Advanced Exfiltration with CDATA](#advanced-exfiltration-with-cdata) **(for any web application backend using XML Parameters entities)**
+* [Remote Code Execution](#remote-code-execution)
 	* PHP
-* [[#Blind XXE]]
-	* [[#Error Based XXE]]
-	* [[#Out-of-band Data Exfiltration]] **(Fully blind)**
+* [Blind XXE](#blind-xxe)
+	* [Error Based XXE](#error-based-xxe)
+	* [Out-of-band Data Exfiltration](#out-of-band-data-exfiltration) **(Fully blind)**
 		* Manually
 		* Automated
 ---

@@ -1,6 +1,6 @@
 ### Content
-* [[#Overview]]
-* [[#Identifying IDORs]]
+* [Overview](#overview)
+* [Identifying IDORs](#identifying-idors)
 	* URL Parameters & APIs
 	* AJAX Calls
 	* Compare User Roles
