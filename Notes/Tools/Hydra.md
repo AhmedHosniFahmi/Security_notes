@@ -1,3 +1,9 @@
+### Content
+- Basic Usage
+- Services
+	- SSH
+	- HTTP
+	- RDP
 ## Basic usage
 ``` bash
 hydra [login_options] [password_options] [attack_options] [service_options]
@@ -9,7 +15,7 @@ hydra [login_options] [password_options] [attack_options] [service_options]
 * `-s <port>`
 * `service://server` Service (e.g., `ssh`, `http`, `ftp`) and the target server's address or hostname.
 ---
-## Hydra Services
+## Services
 
 | Hydra Service   | Example Command                                                                                                   |
 | --------------- | ----------------------------------------------------------------------------------------------------------------- |
@@ -24,7 +30,6 @@ hydra [login_options] [password_options] [attack_options] [service_options]
 | `vnc`           | `hydra -P /path/to/password_list.txt vnc://192.168.1.100`                                                         |
 | `rdp`           | `hydra -l admin -P /path/to/password_list.txt rdp://192.168.1.100`                                                |
 
----
 #### SSH
 Targeting Multiple SSH Servers:
 ``` bash
