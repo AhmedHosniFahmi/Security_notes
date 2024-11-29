@@ -130,7 +130,7 @@ If we were not sure of the directory the web application is in, we can add `../`
 		
 > [!Note]
 > If the app vulnerable to LFI but using appended extension to the user input, read the local PHP files carefully. Follow the next example:
-1. Fuzz find PHP files.
+1. Fuzz to find PHP files.
    We are not restricted to pages with HTTP response code `200`, as we have local file inclusion access, so we should be scanning for all codes, including `301`, `302` and `403` pages, and we should be able to read their source code as well.
 	``` bash
 	ffuf -w seclists/Discovery/Web-Content/directory-list-2.3-small.txt:FUZZ -u http://<SERVER_IP>:<PORT>/FUZZ.php
