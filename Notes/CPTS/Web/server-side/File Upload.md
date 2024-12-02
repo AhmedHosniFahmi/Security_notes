@@ -157,7 +157,7 @@ A whitelist is generally more secure than a blacklist. The web server would only
 			- Bash script that generates all permutations of the file name:
 				``` bash
 				for char in '%20' '%0a' '%00' '%0d0a' '/' '.\\' '.' '…' ':'; do
-				    for ext in '.php' '.phps'; do    #TO USE WORDLIST:  for ext in $(cat phpExtensions.txt); do
+				    for ext in $(cat phpExtensions.txt); do
 				        echo "shell$char$ext.jpg" >> wordlist.txt
 				        echo "shell$ext$char.jpg" >> wordlist.txt
 				        echo "shell.jpg$char$ext" >> wordlist.txt
@@ -358,3 +358,8 @@ GIF8 or FUZZ3
 		2. Update any used libraries.
 		3. Scan uploaded files for malware or malicious strings.
 		4. Utilize a Web Application Firewall (WAF) as a secondary layer of protection.
+---
+Methodology
+1. See if you can upload SVG with XXE payload to read the source code of the uploading function to see the convention name that is applied to the uploaded files and the directory they are uploaded to.
+2. After finding out the path to the uploaded files, Insert a payload inside a legit image so that when you display it, the payload will get executed.
+3. Upload the file to server with an executable extension.
