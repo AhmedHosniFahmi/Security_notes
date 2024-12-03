@@ -120,7 +120,8 @@ Science every character has its own ascii code, Write a specific character with 
 		- b64 encoding
 			- `[Convert]::ToBase64String([System.Text.Encoding]::Unicode.GetBytes('whoami'))`
 				- `iex "$([System.Text.Encoding]::Unicode.GetString([System.Convert]::FromBase64String('dwBoAG8AYQBtAGkA')))"`
-### Tools
+---
+# Tools
 - Linux ([Bashfuscator](https://github.com/Bashfuscator/Bashfuscator))
 	``` bash
 	$ git clone https://github.com/Bashfuscator/Bashfuscator
