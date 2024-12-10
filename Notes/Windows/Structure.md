@@ -1,4 +1,53 @@
-#### Important Directories on the OS Directory
+### Content
+- [Credentials Storage](#credentials-storage)
+	- [LSASS](#lsass)
+	- [SAM Database](#sam-database)
+	- [NTDS.DIT](#ntds.dit)
+	- [Credential Manager](#credential-manager)
+- [Important Directories](#important-directories)
+- [Environment Variables](#environment-variables)
+---
+# Credentials Storage
+
+<img src="https://private-user-images.githubusercontent.com/115187674/394148347-ac20fc5a-9aeb-4f6e-a5f2-31ace3ca7b26.png?jwt=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmF3LmdpdGh1YnVzZXJjb250ZW50LmNvbSIsImtleSI6ImtleTUiLCJleHAiOjE3MzM4MTIyNTQsIm5iZiI6MTczMzgxMTk1NCwicGF0aCI6Ii8xMTUxODc2NzQvMzk0MTQ4MzQ3LWFjMjBmYzVhLTlhZWItNGY2ZS1hNWYyLTMxYWNlM2NhN2IyNi5wbmc_WC1BbXotQWxnb3JpdGhtPUFXUzQtSE1BQy1TSEEyNTYmWC1BbXotQ3JlZGVudGlhbD1BS0lBVkNPRFlMU0E1M1BRSzRaQSUyRjIwMjQxMjEwJTJGdXMtZWFzdC0xJTJGczMlMkZhd3M0X3JlcXVlc3QmWC1BbXotRGF0ZT0yMDI0MTIxMFQwNjI1NTRaJlgtQW16LUV4cGlyZXM9MzAwJlgtQW16LVNpZ25hdHVyZT1hMmRmNzBiOWI2ODg0ZDc1NzI3YmNlN2I2ZmRlYmY5NDQyNGFlMzI3YWVjNWUwYzBlMGVmNDljZDE0ZWU1M2M5JlgtQW16LVNpZ25lZEhlYWRlcnM9aG9zdCJ9.0HKx1Kmjdu9SLD8SGVI4nW8fRDgCZFaDpmpqMlSdBkM" style="height:80%;width:90%;">
+
+### LSASS
+- Local Security Authority Subsystem Service is collection of modules and has access to all authentication processes that can be found in `C:\Windows\System32\Lsass.exe`.
+- This service is responsible for the local system security policy, user authentication, and sending security audit logs to the Event log.
+- Upon initial logon, LSASS will:
+	- Cache creds locally on the memory.
+	- Create [access tokens](https://docs.microsoft.com/en-us/windows/win32/secauthz/access-tokens).
+	- Enforce security policies and write to Windows [security log](https://docs.microsoft.com/en-us/windows/win32/eventlog/event-logging-security).
+- It consists of the following authentication packages:
+
+| Authentication Packages | Description                                                                                                        |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| Lsasrv.dll              | The LSA Server service both enforces security policies and acts as the security package manager for the LSA.       |
+| Msv1_0.dll              | Authentication package for local machine logons that don't require custom authentication.                          |
+| Samsrv.dll              | The Security Accounts Manager stores local security accounts, enforces locally stored policies, and supports APIs. |
+| Kerberos.dll            | Security package loaded by the LSA for Kerberos-based authentication on a machine.                                 |
+| Netlogon.dll            | Network-based logon service.                                                                                       |
+| Ntdsa.dll               | This library is used to create new records and folders in the Windows registry.                                    |
+### SAM Database
+- The Security Accounts Manager database file in Windows operating systems stores users' passwords.
+- It can be used to authenticate local and remote users.
+- User passwords are stored in a hash format NTLM/LM in registry structure.
+- Located in `C:\Windows\system32\config\SAM` and mounted on HKLM/SAM.
+- If the system assigned to a workgroup, it handles the SAM database locally and stores all existing users locally in this database.
+- If the system is domain joined, The DC must validate the credentials from AD database `ntds.dit` on `C:\Windows\ntds.dit`.
+### NTDS.DIT
+- New Technology Directory Service [directory information tree](https://docs.oracle.com/cd/E19901-01/817-7607/dit.html) located in `C:\Windows\NTDS\ntds.dit`
+- DB file that stores the data in Active Directory, including but not limited to:
+	- User accounts (username & password hash)
+	- Group accounts
+	- Computer accounts
+	- Group policy objects
+- Exists and synchronized across all the DCs.
+### Credential Manager
+- Built-in feature on Windows that allows users to save the credentials they use to access various network resources and websites.
+- Located in `C:\Users\[Username]\AppData\Local\Microsoft\[Vault/Credentials]\`.
+---
+# Important Directories
 
 | Name:               | Location:                            | Description:                                                                                                                                                                                                                                                                     |
 | ------------------- | ------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -9,7 +58,7 @@
 | %ProgramFiles(x86)% | `C:\Program Files (x86)`             | Folder containing all 32-bit applications installed on the system. Useful for seeing what kind of applications are installed on the target system.                                                                                                                               |
 
 ---
-#### Environment Variables
+# Environment Variables
 Full list [here](https://ss64.com/nt/syntax-variables.html).
 
 | Variable Name         | Description                                                                                                                                                                                                                                                                               |
