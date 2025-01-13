@@ -39,7 +39,7 @@
 ---
 ## Check allowed methods by a server
 ``` bash
-k1ng0a21r@htb[/htb]$ curl -i -X OPTIONS http://SERVER_IP:PORT/
+$ curl -i -X OPTIONS http://SERVER_IP:PORT/
 
 HTTP/1.1 200 OK
 Date: 
@@ -59,7 +59,7 @@ done
 ```
 Usage:
 ``` bash
-k1ng0a21r@htb[/htb]$ ./script 123.1.3.4
+$ ./script 123.1.3.4
 GET HTTP/1.1 200 OK
 POST HTTP/1.1 200 OK
 PUT HTTP/1.1 200 OK

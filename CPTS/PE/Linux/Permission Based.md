@@ -5,7 +5,6 @@
 ---
 ### Special Permissions
 - [setuid & setgid](https://linuxconfig.org/how-to-use-special-permissions-the-setuid-setgid-and-sticky-bits)
-- [How to use setuid, setgid and sticky bits](https://linuxconfig.org/how-to-use-special-permissions-the-setuid-setgid-and-sticky-bits)
 - It's possible to reverse engineer the program with the special bit set, identify a vulnerability, and exploit this to escalate our privileges.
 	``` bash
 	# Find binaries with setuid set

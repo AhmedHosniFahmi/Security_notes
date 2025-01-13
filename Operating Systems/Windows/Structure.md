@@ -9,7 +9,7 @@
 ---
 # Credentials Storage
 
-<img src="https://private-user-images.githubusercontent.com/115187674/394148347-ac20fc5a-9aeb-4f6e-a5f2-31ace3ca7b26.png?jwt=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmF3LmdpdGh1YnVzZXJjb250ZW50LmNvbSIsImtleSI6ImtleTUiLCJleHAiOjE3MzM4MTIyNTQsIm5iZiI6MTczMzgxMTk1NCwicGF0aCI6Ii8xMTUxODc2NzQvMzk0MTQ4MzQ3LWFjMjBmYzVhLTlhZWItNGY2ZS1hNWYyLTMxYWNlM2NhN2IyNi5wbmc_WC1BbXotQWxnb3JpdGhtPUFXUzQtSE1BQy1TSEEyNTYmWC1BbXotQ3JlZGVudGlhbD1BS0lBVkNPRFlMU0E1M1BRSzRaQSUyRjIwMjQxMjEwJTJGdXMtZWFzdC0xJTJGczMlMkZhd3M0X3JlcXVlc3QmWC1BbXotRGF0ZT0yMDI0MTIxMFQwNjI1NTRaJlgtQW16LUV4cGlyZXM9MzAwJlgtQW16LVNpZ25hdHVyZT1hMmRmNzBiOWI2ODg0ZDc1NzI3YmNlN2I2ZmRlYmY5NDQyNGFlMzI3YWVjNWUwYzBlMGVmNDljZDE0ZWU1M2M5JlgtQW16LVNpZ25lZEhlYWRlcnM9aG9zdCJ9.0HKx1Kmjdu9SLD8SGVI4nW8fRDgCZFaDpmpqMlSdBkM" style="height:80%;width:90%;">
+<img src="https://academy.hackthebox.com/storage/modules/147/Auth_process1.png" style="height:80%;width:90%;">
 
 ### LSASS
 - Local Security Authority Subsystem Service is collection of modules and has access to all authentication processes that can be found in `C:\Windows\System32\Lsass.exe`.

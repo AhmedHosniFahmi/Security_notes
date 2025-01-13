@@ -78,7 +78,7 @@ Example:
 * Defined entity can be referenced in an XML document `&ENTITY_NAME;`
 ``` XML
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE email [<!ENTITY newEntity "k1ng0a21r">] >
+<!DOCTYPE email [<!ENTITY newEntity "entit">] >
 <root>
 	<name>a</name>
 	<tel>1</tel>

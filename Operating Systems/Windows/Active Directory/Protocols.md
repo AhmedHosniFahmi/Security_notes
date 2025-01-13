@@ -3,7 +3,10 @@
 - [LDAP](#ldap)
 - [MSRPC](#msrpc)
 - [Authentication Methods](#authentication-methods)
-	- LM, NTLM, NTLMv1, and NTLMv2.
+	- [LM](#lm)
+	- [NT Hash (NTLM)](#nt-hash-(ntlm))
+	- [NTLMv1 (Net-NTLMv1)](#ntlmv1-(net-ntlmv1))
+	- [NTLMv2 (Net-NTLMv2)](#ntlmv2-(net-ntlmv2))
 ---
 # Kerberos
 Network-based authentication protocol that uses secret-key cryptography to verify the identity of users and services.
@@ -54,7 +57,7 @@ sequenceDiagram
 2. `SASL Authentication`: [The Simple Authentication and Security Layer (SASL)](https://en.wikipedia.org/wiki/Simple_Authentication_and_Security_Layer) uses other authentication services, such as Kerberos.
 
 
-<img src="https://private-user-images.githubusercontent.com/115187674/394024324-7fe665b5-cd37-4d1f-b7cf-653fbe6cf3b4.png?jwt=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmF3LmdpdGh1YnVzZXJjb250ZW50LmNvbSIsImtleSI6ImtleTUiLCJleHAiOjE3MzM3ODE2NTksIm5iZiI6MTczMzc4MTM1OSwicGF0aCI6Ii8xMTUxODc2NzQvMzk0MDI0MzI0LTdmZTY2NWI1LWNkMzctNGQxZi1iN2NmLTY1M2ZiZTZjZjNiNC5wbmc_WC1BbXotQWxnb3JpdGhtPUFXUzQtSE1BQy1TSEEyNTYmWC1BbXotQ3JlZGVudGlhbD1BS0lBVkNPRFlMU0E1M1BRSzRaQSUyRjIwMjQxMjA5JTJGdXMtZWFzdC0xJTJGczMlMkZhd3M0X3JlcXVlc3QmWC1BbXotRGF0ZT0yMDI0MTIwOVQyMTU1NTlaJlgtQW16LUV4cGlyZXM9MzAwJlgtQW16LVNpZ25hdHVyZT03N2I5MzRjYWIzZDQxOGRiZjNhNGM2YTU1MWMwNTc1MmUyM2VlYzE5Zjc4NDU3ZDUyNTEwNDM4ZGU4YWE0YjUwJlgtQW16LVNpZ25lZEhlYWRlcnM9aG9zdCJ9.3RRag8UdK2G_HWAcijwCNw1vh_YhuYED1rWiGKSmdDc" style="height:60%;width:80%;">
+<div style="display: flex; justify-content: center;"><img src="https://academy.hackthebox.com/storage/modules/74/LDAP_auth.png" style="height:60%;width:80%;"></div>
 
 ---
 ## MSRPC
