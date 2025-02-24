@@ -7,7 +7,10 @@
 # Create Username Wordlists
 - [Username Anarchy](https://github.com/urbanadventurer/username-anarchy.git)
 	``` bash
+	# To create mutated names for one name
 	./username-anarchy john doe > john_doe_usernames.txt
+	# To create mutated names for list of names
+	./username-anarchy -i /home/ltnbob/names.txt  
 	```
 - [CUPP](https://github.com/Mebus/cupp)
 	```

