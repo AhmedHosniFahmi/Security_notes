@@ -82,8 +82,6 @@ Using Kerbrute for username enumeration will generate event ID [4768: A Kerberos
 
 There is also [linkedin2username](https://github.com/initstring/linkedin2username) to mash up possible usernames from a company's LinkedIn page.
 
-
-
 ---
 ## Enumerating & Retrieving Password Policies
 

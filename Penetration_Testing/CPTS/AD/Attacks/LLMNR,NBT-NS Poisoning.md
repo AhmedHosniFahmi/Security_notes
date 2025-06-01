@@ -66,12 +66,13 @@ Mitre ATT&CK lists this technique as [ID: T1557.001](https://attack.mitre.org/te
 
 1. **Disabling LLMNR**
    `Group plicy management -> (right click on the default domain policy and click on edit, the group policy management editor will open ) -> Computer Configuration  -> Policies -> Administrative Templates -> Network -> DNS Client -> (enable) "Turn OFF Multicast Name Resolution."`
-<img src="https://academy.hackthebox.com/storage/modules/143/llmnr_disable.png" style="height:65%; width:75%;">
+<img src="../../../../llmnr_disable 1.webp" style="height:65%; width:75%;">
 
 2. **Disabling NBT-NS**
    NBT-NS cannot be disabled via Group Policy and must be disabled locally on each host.
    We can do this by opening `Network and Sharing Center -> Control Panel -> Change adapter settings -> right click on the adapter and view its properties -> Internet Protocol Version 4 (TCP/IPv4) -> properties -> advanced -> WINS -> (check) Disable NetBIOS over TCP/IP`.
-<img src="https://academy.hackthebox.com/storage/modules/143/disable_nbtns.png" style="height:65%; width:75%;">
+<img src="../../../../disable_nbtns.webp" style="height:65%; width:75%;">
+
 
 
 While it is not possible to disable NBT-NS directly via GPO, we can create a PowerShell script under and save it a `.ps1` file and go to: 
@@ -81,14 +82,14 @@ $regkey = "HKLM:SYSTEM\CurrentControlSet\services\NetBT\Parameters\Interfaces"
 Get-ChildItem $regkey |foreach { Set-ItemProperty -Path "$regkey\$($_.pschildname)" -Name NetbiosOptions -Value 2 -Verbose}
 ```
 For these changes to occur, we would have to either reboot the target system or restart the network adapter.
-<img src="https://academy.hackthebox.com/storage/modules/143/nbtns_gpo.png" style="height:65%; width:75%;">
+<img src="../../../../nbtns_gpo.webp" style="height:65%; width:75%;">
 
 To push this out to all hosts in a domain, we could create a GPO using `Group Policy Management` on the Domain Controller and host the script on the SYSVOL share in the scripts folder and then call it via its UNC path such as:
 
 `\\inlanefreight.local\SYSVOL\INLANEFREIGHT.LOCAL\scripts`
 Once the GPO is applied to specific OUs and those hosts are restarted, the script will run at the next reboot and disable NBT-NS, provided that the script still exists on the SYSVOL share and is accessible by the host over the network.
 
-<img src="https://academy.hackthebox.com/storage/modules/143/nbtns_gpo_dc.png" style="height:85%; width:85%;">
+<img src="../../../../nbtns_gpo_dc.webp" style="height:85%; width:85%;">
 
 ---
 

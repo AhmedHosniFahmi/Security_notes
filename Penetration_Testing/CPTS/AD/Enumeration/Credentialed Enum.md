@@ -58,7 +58,7 @@ rpcclient $> queryuser 0x1f4
 #### Impacket Toolkit
 ``` bash
 # To connect to a host with psexec.py, we need credentials for a user with local administrator privileges.
-# psexec.py utilizes an interactice shell
+# psexec.py utilizes an interactive shell
 $ psexec.py domain.local/username:'password'@IP
 
 # Wmiexec.py utilizes a semi-interactive shell
@@ -101,6 +101,8 @@ PS C:\Users> get-module
 PS C:\Users> import-module ActiveDirectory
 # Get Domain Info
 PS C:\Users> Get-ADDomain
+# Extract all domain admin privileged users accounts
+PS C:\Users> Get-ADUser -Filter * -Properties adminCount | Where-Object { $_.adminCount -eq 1 }
 # filtering for accounts with the ServicePrincipalName property populated.
 # This will get us a listing of accounts that may be susceptible to a Kerberoasting attack
 PS C:\Users> Get-ADUser -Filter {ServicePrincipalName -ne "$null"} -Properties ServicePrincipalName
@@ -112,6 +114,10 @@ PS C:\Users> Get-ADGroup -Filter * | select name
 PS C:\Users> Get-ADGroup -Identity "Group Name from above"
 # Get a member listing from the group above
 PS C:\Users> Get-ADGroupMember -Identity "Group Name from above"
+# to show only distinguishname and samaccountname ( | select -Property distinguishedName,samaccountname )
+
+# Checking for Reversible Encryption Option using Get-ADUser
+PS C:\Users> Get-ADUser -Filter 'userAccountControl -band 128' -Properties userAccountControl
 ```
 
 #### PowerView
@@ -129,6 +135,8 @@ PS C:\Users> Get-DomainTrustMapping
 PS C:\Users> Test-AdminAccess -ComputerName ACADEMY-EA-MS01
 # Check for users with the SPN attribute set (may be subjected to a Kerberoasting attack).
 PS C:\Users> Get-DomainUser -SPN -Properties samaccountname,ServicePrincipalName
+# Checking for Reversible Encryption Option using Get-DomainUser
+PS C:\Users> Get-DomainUser -Identity * | ? {$_.useraccountcontrol -like '*ENCRYPTED_TEXT_PWD_ALLOWED*'} |select samaccountname,useraccountcontrol
 
 # SharpView .NET port of PowerView. Many of the same functions supported by PowerView can be used with SharpView.
 # type a method name with `-Help` to get an argument list.
@@ -252,6 +260,11 @@ PS C:\> dsquery * -filter "(&(objectCategory=person)(objectClass=user)(userAccou
 
 # Look for all Domain Controllers in the current domain, limiting to five results.
 PS C:\> dsquery * -filter "(userAccountControl:1.2.840.113556.1.4.803:=8192)" -limit 5 -attr sAMAccountName
+
+# Look for all domain admin privileged users recursively through the "Domain Admins" group and its sub groups 
+PS C:\> dsquery * -filter "(&(objectCategory=person)(objectClass=user)(memberof:1.2.840.113556.1.4.1941:=CN=Domain Admins,CN=Users,DC=INLANEFREIGHT,DC=LOCAL))" -attr sAMAccountName
+# Or use
+PS C:\> dsquery * -filter "(&(objectCategory=person)(objectClass=user)(adminCount=1))"
 ```
 
 - `-filter "(userAccountControl:1.2.840.113556.1.4.803:=8192)"`

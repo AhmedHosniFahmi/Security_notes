@@ -10,6 +10,7 @@
 ---
 # Kerberos
 Network-based authentication protocol that uses secret-key cryptography to verify the identity of users and services.
+All actors have to synchronize the time between them.
 The Kerberos protocol uses **port 88 (both TCP and UDP).**
 ##### Components in Kerberos:
 1. **Key Distribution Center (KDC)**:
@@ -31,17 +32,58 @@ sequenceDiagram
     participant TGS as KDC (TGS)
     participant Service as Service
     
-    Client-)AS: [1] TGT Ticket (Username, Timestamp, Session key)
-    Note over Client,AS: Session key encrypted with the client's password hash
+	Note over Client,AS: AS-REQ
+    rect rgb(255,255,255)
+    Client-)AS: [1] TGT Ticket (Client's identity, Timestamp)
+    Note over Client,AS: Encrypted using client hash
+    Note over AS: Decrypt TGT Ticket using client hash 
+    end
     
-    AS--)Client: [2] TGT (Username, Expiration time, Session key)
-    Note over AS,Client: Encrypted with KDC secret key
+    Note over Client,AS: AS-REP
+    rect rgb(255,255,255)
+    AS--)Client: [2] TGT (Client's identity, Expiration time, Session key)
+    Note over AS,Client: Encrypted using TGS secret
     
-    Client-)TGS: [3] TGS Ticket (TGT, Service Name)
-    TGS--)Client: [4] TGS (Encrypted with Service's Key)
+	AS--)Client: [3] (Session key)
+    Note over AS,Client: Encrypted using client hash
+    Note over Client: Decrypt session key using the client hash
+    Note over Client: Create authenticator (Client's identity)
+    Note over Client: Encrypt authenticator using session key
+    end
     
-    Client-)Service: [5] TGS (Service Ticket, Authenticator)
-    Service--)Client: [6] Response (Authenticator)
+    Note over Client,TGS: TGS-REQ
+    rect rgb(255,255,255)
+    Client-)TGS: [4] TGS Ticket (TGT(Client's identity, Expiration time, Session key), Service Name) + (Authenticator)
+    Note over TGS: Decrypt TGT using TGS secret (extract session key)
+    Note over TGS: Decrypt authenticator using extracted session key
+    Note over TGS: Check TGT identity and authenticator identity
+    end
+    
+    Note over Client,TGS: TGS-REP
+    rect rgb(255,255,255)
+    TGS--)Client: [5] TGS (Client's identity, New Session key)
+    Note over TGS,Client: Encrypted with Service's Secret
+    
+	TGS--)Client: [6] (New Session key)
+    Note over TGS,Client: Encrypted usig old session key from [3]
+	Note over Client: Decrypt new session key using the old one
+    Note over Client: Create authenticator (client's identity)
+    Note over Client: Encrypt authenticator using new session key
+    end
+    
+    Note over Client,Service: AP-REQ
+    rect rgb(255,255,255)
+    Client-)Service: [7] TGS (New Session key, Client's Identity) + (Authenticator)
+    Note over Service: Decrypt TGS
+    Note over Service: Decrypt Authenticator
+    Note over Service: Compare Identities
+    Note over Service: Check client permessions
+    end
+    
+    Note over Client,Service: AP-REP
+    rect rgb(255,255,255)
+    Service--)Client: [8] (Timestamp) Encrypted with last session key
+    end
 ```
 ---
 # LDAP
@@ -95,7 +137,7 @@ Windows systems use MSRPC to access systems in Active Directory using four key R
 	- If the password is less than 14 chars, padded with NULL chars to reach 14 chars.
 	- Split the 14 chars into 2 chunks.
 	- 2 DES keys are created from each chunk.
-	- Encrypt those chunks with the string `KGS!@#$%`, which will create two 8-byte ciphertexts.
+	- Encrypt the string `KGS!@#$%` twice, each with a key, which will create two 8-byte ciphertexts.
 	- Concatenate the 2 ciphertexts resulting in an LM hash.
 ### NT Hash (NTLM)
 - NT LAN Manager hashes are stronger.
