@@ -12,7 +12,7 @@
 If an account has pre-authentication disabled, an attacker can request authentication data for the affected account and retrieve an encrypted TGT from the Domain Controller. This can be subjected to an offline password attack using a tool such as Hashcat or John the Ripper.
 
 Ex:
-<img src="../../../../../assets/preauth_not_reqd_mmorgan.webp" style="display: block; margin:auto; width:80%; height:60%;">
+<img src="/assets/preauth_not_reqd_mmorgan.webp" style="display: block; margin:auto; width:80%; height:60%;">
 
 ---
 ## ASREPRoasting from Windows

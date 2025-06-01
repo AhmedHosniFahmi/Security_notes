@@ -4,7 +4,8 @@
 - Abuse `GenericAll` to conduct targeted Kerberoasting attack 
 ---
 After the enumeration, we gained a lot of information, now to perform the attack chain we have to do the following then clean up at the end.
-<img src="../../../../../assets/acl_abuse_path.png" width="70%">
+
+<img src="/assets/acl_abuse_path.png" width="70%">
 
 1. Use the `wley` user to change the password for the `damundsen` user by abusing the User-Force-Change-Password
 	``` PowerShell

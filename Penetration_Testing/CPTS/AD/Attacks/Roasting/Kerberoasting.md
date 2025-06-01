@@ -146,7 +146,8 @@ Check [Supported Kerberos Encryption Types](https://techcommunity.microsoft.com/
 
 Edit the encryption types used by Kerberos
 `Open Group Policy > Edit the defautl domain policy > Computer Configuration > Policies > Windows Settings > Security Settings > Local Policies > Security Options > double-click on (Network security: Configure encryption types allowed for Kerberos) `
-<img src="https://academy.hackthebox.com/storage/modules/143/kerb_encrypt_types.png" style="height:60%px;width:60%">
+
+<img src="/assets/kerb_encrypt_types.png" style="height:60%px;width:60%">
 
 > Removing support for AES would introduce a security flaw into AD and should likely never be done.
 > Furthermore, removing support for RC4 regardless of the Domain Controller Windows Server version or domain functional level could have operational impacts and should be thoroughly tested before implementation.
@@ -155,7 +156,7 @@ Edit the encryption types used by Kerberos
 
 Kerberoasting requests Kerberos TGS tickets with RC4 encryption, which should not be the majority of Kerberos activity within a domain. When Kerberoasting is occurring in the environment, we will see an abnormal number of `TGS-REQ` and `TGS-REP` requests and responses, signaling the use of automated Kerberoasting tools. Domain controllers can be configured to log Kerberos TGS ticket requests by selecting [Audit Kerberos Service Ticket Operations](https://docs.microsoft.com/en-us/windows/security/threat-protection/auditing/audit-kerberos-service-ticket-operations) within Group Policy.
 
-<img src="https://academy.hackthebox.com/storage/modules/143/kerb_audit.png" style="height:60%px;width:60%">
+<img src="/assets/kerb_audit.png" style="height:60%px;width:60%">
 
 Doing so will generate two separate event IDs: [4769](https://docs.microsoft.com/en-us/windows/security/threat-protection/auditing/event-4769): A Kerberos service ticket was requested, and [4770](https://docs.microsoft.com/en-us/windows/security/threat-protection/auditing/event-4770): A Kerberos service ticket was renewed. 10-20 Kerberos TGS requests for a given account can be considered normal in a given environment. A large amount of 4769 event IDs from one account within a short period may indicate an attack.
 

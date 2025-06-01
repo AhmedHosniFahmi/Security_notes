@@ -197,9 +197,11 @@ PS C:\> Get-GPO -Guid 7CA9C789-14CE-46E3-A722-83F4097AF532
 We could use a tool such as [SharpGPOAbuse](https://github.com/FSecureLABS/SharpGPOAbuse) to take advantage of this GPO misconfiguration.
 
 We can also see that in BloodHound
-<img src="../../../../assets/gporights.png" style="display: block; margin:auto; width:90%; height:60%;">
+
+<img src="/assets/gporights.png" style="display: block; margin:auto; width:90%; height:60%;">
 
 If we select the GPO in BloodHound and scroll down to `Affected Objects` on the `Node Info` tab, we can see that this GPO is applied to one OU, which contains four computer objects.
-<img src="../../../../assets/gpoaffected.png" style="display: block; margin:auto; width:80%; height:60%;">
+
+<img src="/assets/gpoaffected.png" style="display: block; margin:auto; width:80%; height:60%;">
 
 

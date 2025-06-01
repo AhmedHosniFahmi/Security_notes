@@ -34,7 +34,7 @@ Each ACE is made up of the following `four` components:
 3. A set of flags that specify whether or not child containers/objects can inherit the given ACE entry from the primary or parent object
 4. An [access mask](https://docs.microsoft.com/en-us/openspecs/windows_protocols/ms-dtyp/7a53f60e-e730-4dfe-bbe9-b21b62eb790b?redirectedfrom=MSDN) which is a 32-bit value that defines the rights granted to an object
 
-<img src="../../../../../assets/ACE_example.webp" width="80%" height="70%">
+<img src="/assets/ACE_example.webp" width="80%" height="70%">
 
 Some example AD object security permissions are as follows:
 - [ForceChangePassword](https://bloodhound.readthedocs.io/en/latest/data-analysis/edges.html#forcechangepassword) - gives us the right to reset a user's password without first knowing their password.
@@ -48,7 +48,7 @@ Some example AD object security permissions are as follows:
 
 Possible ACE attacks and the tools to perform these attacks from both Windows and Linux (if applicable).
 
-<img src="../../../../../assets/ACL_attacks_graphic.webp">
+<img src="/assets/ACL_attacks_graphic.webp">
 
 ---
 
@@ -57,8 +57,8 @@ Possible ACE attacks and the tools to perform these attacks from both Windows an
 > - The `Permissions` tab will be the ACL's tab.
 > - The `Auditing` tab will be the SACL's tab. 
 
-<img src="../../../../../assets/DACL_example.webp" style="height:60%;width:80%">
+<img src="/assets/DACL_example.webp" style="height:60%;width:80%">
 
-<img src="../../../../../assets/SACL_example.webp" style="height:60%;width:80%">
+<img src="/assets/SACL_example.webp" style="height:60%;width:80%">
 
 ---

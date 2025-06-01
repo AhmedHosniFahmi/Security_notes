@@ -52,7 +52,7 @@
 		xfreerdp  /v:10.129.201.126 /u:julio /pth:64F12CDDAA88057E06A81B54E73B949B
 		```
   - `Restricted Admin Mode` is disabled by default, it should be enabled on the target host.
-  <img src="https://academy.hackthebox.com/storage/modules/147/rdp_session-4.png" style="width:40%; height:40%;">
+  <img src="/assets/rdp_session-4.png" style="width:50%; height:50%;">
 
   - Enable it by adding a new registry key `DisableRestrictedAdmin` (REG_DWORD) under `HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\Lsa` with the value of `0`. 
       ```cmd

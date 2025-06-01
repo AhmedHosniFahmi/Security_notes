@@ -7,7 +7,7 @@
 - It is used by Domain Controllers to replicate domain data including the Active Directory password database. 
 - This requires `DS-Replication-Get-Changes-All` and `DS-Replication-Get-Changes` permissions on the domain object
 - The attack is beneficial to retrieve the current NTLM password hash for any domain user and the hashes corresponding to their previous passwords.
-<img src="../../../../../assets/adnunn_right_dcsync.webp" width="65%" height="70%" style="display: block; margin:auto;">
+<img src="/assets/adnunn_right_dcsync.webp" width="65%" height="70%" style="display: block; margin:auto;">
 ---
 #### Enumerate DCSync attack using PowerView
 ``` PowerShell
