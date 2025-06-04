@@ -29,6 +29,9 @@ ffuf -w /opt/useful/seclists/Discovery/Web-Content/directory-list-2.3-small.txt:
 ``` bash
 # add the IP to /etc/hosts  
 ffuf -w /opt/useful/seclists/Discovery/DNS/subdomains-top1million-5000.txt:FUZZ -u http://FUZZ.academy.htb/ -fs 900 -t 200 -v
+
+# 
+ffuf  -v -w /usr/share/wordlists/seclists/Discovery/DNS/subdomains-top1million-5000.txt:FUZZ -u http://FUZZ.thetoppers.htb/  --mc all
 ```
 ##### Virtual host fuzzing
 ``` bash

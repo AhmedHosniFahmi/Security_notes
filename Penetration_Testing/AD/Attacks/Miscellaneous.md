@@ -40,6 +40,8 @@ The Exchange service runs as SYSTEM and is over-privileged by default (i.e., has
 
 We can use tools such as the **`Get-SpoolStatus`** module from [NetNTLMtoSilverTicket](https://github.com/NotMedic/NetNTLMtoSilverTicket) or [Security-Assessment](https://web.archive.org/web/20200919080216/https://github.com/cube0x0/Security-Assessment) to check for machines vulnerable to the [MS-PRN Printer Bug](https://blog.sygnia.co/demystifying-the-print-nightmare-vulnerability). This flaw can be used to compromise a host in another forest that has Unconstrained Delegation enabled, such as a domain controller. It can help us to attack across forest trusts once we have compromised one forest.
 
+[MS-RPRN abuse (PrinterBug)](https://www.thehacker.recipes/ad/movement/mitm-and-coerced-authentications/ms-rprn)
+
 ---
 # MS14-068
 

