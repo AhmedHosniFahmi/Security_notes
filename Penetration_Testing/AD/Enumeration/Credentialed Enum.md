@@ -5,7 +5,7 @@
 	- [rpcclient](#rpcclient)
 	- [Impacket Toolkit](#impacket-toolkit)
 	- [Windapsearch](#windapsearch)
-	- [BloodHound](#bloodhound)
+	- BloodHound
 2. [From Windows Host](#from-windows-host)
 	- [ActiveDirectory Module](#activedirectory-module)
 	- [PowerView](#powerview)
@@ -63,7 +63,7 @@ $ psexec.py domain.local/username:'password'@IP
 
 # Wmiexec.py utilizes a semi-interactive shell
 # This is a more stealthy approach
-$wmiexec.py domain.local/username:'password'@IP 
+$ wmiexec.py domain.local/username:'password'@IP 
 ```
 
 #### Windapsearch
@@ -72,22 +72,6 @@ $wmiexec.py domain.local/username:'password'@IP
 $ python3 windapsearch.py --dc-ip 172.16.5.5 -u user@domain.local -p password --da
 # Find privileged users
 $ python3 windapsearch.py --dc-ip 172.16.5.5 -u user@domain.local -p password -PU
-```
-
-#### BloodHound
-[BloodHound Cypher Cheatsheet](https://hausec.com/2019/09/09/bloodhound-cypher-cheatsheet/)
-``` bash
-$ sudo bloodhound-python -u 'username' -p 'password' -ns DC-IP -d domain.local -c all
-
-$ ls
-20220307163102_computers.json  20220307163102_domains.json  20220307163102_groups.json  20220307163102_users.json 
-
-$ zip -r file.zip *.json
-
-# sudo neo4j start to start the neo4j service
-# go to localhost:7474 to set a username and a password
-# user == neo4j / pass == root
-# open bloodhound and clikc on upload data and select the zip file
 ```
 
 ---

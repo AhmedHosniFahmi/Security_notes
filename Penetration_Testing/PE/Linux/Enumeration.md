@@ -197,5 +197,9 @@ cat /etc/hosts
   
 # check the arp table to see what other hosts the target has been communicating with.  
 arp -a
+
+# TCP sockets listenning
+# try it with the n then without the n to resolve the service name
+ss -tln
 ```
 ---

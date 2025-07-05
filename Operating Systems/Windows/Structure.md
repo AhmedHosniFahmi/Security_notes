@@ -9,7 +9,7 @@
 ---
 # Credentials Storage
 
-<img src="https://academy.hackthebox.com/storage/modules/147/Auth_process1.png" style="height:80%;width:90%;">
+<img src="/assets/Auth_process1.png" style="height:80%;width:90%;">
 
 ### LSASS
 - Local Security Authority Subsystem Service is collection of modules and has access to all authentication processes that can be found in `C:\Windows\System32\Lsass.exe`.

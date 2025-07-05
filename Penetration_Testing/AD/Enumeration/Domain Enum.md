@@ -95,7 +95,7 @@ $ crackmapexec smb <ip> -u username -p Password --pass-pol
 
 # Enumerating the Password Policy - SMB NULL Sessions
 
-# We can use rpcclient to check a Domain Controller for SMB NULL session access.
+# We can use rpcclient to check a Domain Controller for (-N) SMB NULL session access.
 $ rpcclient -U "" -N <IP>
 # Once connected, we can issue an RPC command such as querydominfo to obtain information about the domain and confirm NULL session access.
 rpcclient $> querydominfo

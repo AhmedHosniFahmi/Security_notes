@@ -99,7 +99,7 @@ sequenceDiagram
 2. `SASL Authentication`: [The Simple Authentication and Security Layer (SASL)](https://en.wikipedia.org/wiki/Simple_Authentication_and_Security_Layer) uses other authentication services, such as Kerberos.
 
 
-<div style="display: flex; justify-content: center;"><img src="https://academy.hackthebox.com/storage/modules/74/LDAP_auth.png" style="height:60%;width:80%;"></div>
+<div style="display: flex; justify-content: center;"><img src="/assets/LDAP_auth.png" style="height:60%;width:80%;"></div>
 
 ---
 ## MSRPC

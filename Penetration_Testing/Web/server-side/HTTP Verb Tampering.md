@@ -38,6 +38,7 @@
 
 ---
 ## Check allowed methods by a server
+
 ``` bash
 $ curl -i -X OPTIONS http://SERVER_IP:PORT/
 

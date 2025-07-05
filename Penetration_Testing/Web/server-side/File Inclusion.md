@@ -22,12 +22,12 @@
 		* [Server Log Poisoning](#server-log-poisoning)
 * [Automation](#automation)
 * [Read, Write and Execute Functions](#read-write-and-execute-functions)
+
 > [!Important]
 > [LFI Wordlist](https://github.com/danielmiessler/SecLists/tree/master/Fuzzing/LFI)
 > [LFI-Jhaddix.txt](https://github.com/danielmiessler/SecLists/blob/master/Fuzzing/LFI/LFI-Jhaddix.txt) Contains various bypasses.
 > [wordlist for Linux](https://github.com/danielmiessler/SecLists/blob/master/Discovery/Web-Content/default-web-root-directory-linux.txt) and [wordlist for Windows](https://github.com/danielmiessler/SecLists/blob/master/Discovery/Web-Content/default-web-root-directory-windows.txt) for common web root paths.
 >**DON'T FORGET THE PHP WRAPPERS** :{}
-
 
 ---
 ## Overview
@@ -50,7 +50,7 @@
 ## Local file inclusion
 If we were not sure of the directory the web application is in, we can add `../` many times.
 - **Common readable files** that are available on most back-end servers:
-	- `Windows`: `C:\Windows\boot.ini`
+	- `Windows`: `C:\Windows\win.ini`
 	- `Linux`: `/etc/passwd`
 - The main directory of web applications on Linux servers is `/var/www/html/`.
 - **Second-Order Attacks**

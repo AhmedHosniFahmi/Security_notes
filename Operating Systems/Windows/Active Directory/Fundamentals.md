@@ -33,7 +33,7 @@
 		- Windows uses this SID to resolve the object's name via the trust relationship.
 		- FSPs are created in a specific container named ForeignSecurityPrincipals.
 
-<img src="https://academy.hackthebox.com/storage/modules/74/adobjects.png" style="height:55%; width:55%;">
+<img src="/assets/adobjects.png" style="height:55%; width:55%;">
 
 #### Attributes
 - Every object in Active Directory has an associated set of [attributes](https://docs.microsoft.com/en-us/windows/win32/adschema/attributes-all) used to define characteristics of the given object.
@@ -68,6 +68,7 @@
 - A SID can only be used once. Even if the security principle is deleted, it can never be used again in that environment to identify another user or group.
 - When a user logs in, the system creates an access token for them which contains the user's SID, the rights they have been granted, and the SIDs for any groups that the user is a member of. This token is used to check rights whenever the user performs an action on the computer.
 - There are also [well-known SIDs](https://ldapwiki.com/wiki/Wiki.jsp?page=Well-known%20Security%20Identifiers) that are used to identify generic users and groups. These are the same across all operating systems.
+
 #### Distinguished Name (DN) & Relative Distinguished Name (RDN)
 - DN
 	- A [Distinguished Name (DN)](https://docs.microsoft.com/en-us/previous-versions/windows/desktop/ldap/distinguished-names) describes the full path to an object in AD 
@@ -76,7 +77,8 @@
 	- A [Relative Distinguished Name (RDN)](https://docs.microsoft.com/en-us/windows/win32/ad/object-names-and-identities) is a single component of the Distinguished Name that identifies the object as unique from other objects at the current level in the naming hierarchy.
 	- It's forbidden to have objects with the same DN under the same parent container, but it's allowed to have objects with the same RDN.
 
-<img src="https://academy.hackthebox.com/storage/modules/74/dn_rdn2.png" style="height:70%; width:70%;">
+<img src="/assets/dn_rdn2.png" style="height:70%; width:70%;">
+
 
 #### sAMAccountName
 - The [sAMAccountName](https://docs.microsoft.com/en-us/windows/win32/ad/naming-properties#samaccountname) is the user's logon name. Here it would just be `bjones`. It must be a unique value and 20 or fewer characters.
@@ -192,8 +194,8 @@
 - Forest is the highest level and it can contain one or more domains, which can themselves have nested subdomains.
 - Forests and domains can be linked together via trust relationships.
 
-<img src="https://academy.hackthebox.com/storage/modules/74/ad_forests.png" style="height:70%; width:70%;">
-<img src="https://academy.hackthebox.com/storage/modules/74/ilflog2.png" style="height:70%; width:70%;">
+<img src="/assets/ad_forests.png" style="height:70%; width:70%;">
+<img src="/assets/ilflog2.png" style="height:70%; width:70%;">
 
 ### Domain and Forest Functional Levels
 - Active Directory Domain Services (AD DS) functional levels determine the features and capabilities of an AD environment based on the versions of Windows Server running on domain controllers.
@@ -220,7 +222,7 @@
 		- Domain A trusts Domain B only, regardless of any trusts Domain B might have with other domains.
 - Trusts can be one-way or two-way (bidirectional).
 
-<img src="https://academy.hackthebox.com/storage/modules/74/trusts-diagram.png" style="height:60%;width:80%;">
+<img src="/assets/trusts-diagram.png" style="height:50%;width:70%;display: block; margin:auto;">
 
 ---
 
