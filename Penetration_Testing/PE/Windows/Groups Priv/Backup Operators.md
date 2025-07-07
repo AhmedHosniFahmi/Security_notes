@@ -3,7 +3,7 @@
 - [Overview](#overview)
 - [SeBackupPrivilege Abuse](#sebackupprivilege-abuse)
 	- [Copying a Protected File](#copying-a-protected-file)
-	- [Copying NTDS.dit](#copying-ntds.dit)
+	- [Copying NTDS File](#copying-ntds-file)
 
 ---
 #### Overview
@@ -40,9 +40,9 @@ cat : Access to the path 'C:\Confidential\2021 Contract.txt' is denied.
 PS C:\> Copy-FileSeBackupPrivilege 'C:\Confidential\2021 Contract.txt' .\Contract.txt
 ```
 
-#### Copying NTDS.dit
+#### Copying NTDS File
 
-See [This](%2E%2E/%2E%2E/%2E%2E/Password%20Attacks/Windows/Local%20Attacks#NTDS%2Edit%20Attacks)
+See [This](%2E%2E/%2E%2E/%2E%2E/Password%20Attacks/Windows/Local%20Attacks.md#NTDS%2Edit%20Attacks)
 
 As the `NTDS.dit` file is locked by default, we can use the Windows [diskshadow](https://docs.microsoft.com/en-us/windows-server/administration/windows-commands/diskshadow) utility to create a shadow copy of the `C` drive and expose it as `E` drive. The NTDS.dit in this shadow copy won't be in use by the system.
 

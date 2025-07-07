@@ -92,7 +92,7 @@ Pulling hashes from memory by dumping the `lsass.exe` process memory.
 ---
 ## NTDS.dit Attacks 
 
-See [This](%2E%2E/%2E%2E/PE/Windows/Groups%20Priv/Backup%20Operators#Copying%20NTDS%2Edit)
+See [This](%2E%2E/%2E%2E/PE/Windows/Groups%20Priv/Backup%20Operators.md#Copying%20NTDS%2Edit)
 
 Extracting hashes from the NTDS database (ntds.dit) on a **Domain Controller**.
 
