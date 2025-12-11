@@ -34,7 +34,7 @@
 
 <img src="/assets/dns_query.png">
 
-<img src="assets/dns_query_iterative.png">
+<img src="/assets/dns_query_iterative.png">
 
 ---
 ### Types of DNS Servers
