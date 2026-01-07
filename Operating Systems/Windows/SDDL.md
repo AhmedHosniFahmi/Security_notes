@@ -1,10 +1,15 @@
 ### Content
 
-- [View Service Permissions](#view-service-permissions)
 - [Overview](#overview)
+- [View Service Permissions](#view-service-permissions)
 - [Example](#example)
 
 > [Resource.1](https://www.winhelponline.com/blog/view-edit-service-permissions-windows/)
+---
+#### Overview
+
+The `Security Descriptor Definition Language (SDDL)` output can contain DACL as well as SACL entries. A DACL identifies users and groups who are allowed or denied access to an object. The SACL defines how access is audited on an object. SACL enables administrators to log attempts to access a secured object.
+
 ---
 ###### View Service Permissions
 
@@ -16,13 +21,9 @@ C:\> sc.exe sdshow schedule
 D:(A;;CCLCSWLORC;;;**AU**)(A;;CCLCSWRPDTLOCRRCWDWO;;;**BA**)(A;;CCDCLCSWRPWPDTLOCRSDRCWDWO;;;**SY**)(A;;CCLCSWLORC;;;**BU**)S:(AU;FA;CCDCLCSWRPWPDTLOCRSDRCWDWO;;;**WD**)
 ```
 
-The above output shows the Task Scheduler service’s permission entries in Security `Descriptor Definition Language (SDDL)` format.
+The above output shows the Task Scheduler service’s permission entries in `Security Descriptor Definition Language (SDDL)` format.
 
 ---
-#### Overview
-
-The `Security Descriptor Definition Language (SDDL)` output can contain DACL as well as SACL entries. A DACL identifies users and groups who are allowed or denied access to an object. The SACL defines how access is audited on an object. SACL enables administrators to log attempts to access a secured object.
-
 #### Example
 
 let’s cover only the DACL (denoted by the D: at the beginning.) SACL is for a different purpose and is out of the scope this document.

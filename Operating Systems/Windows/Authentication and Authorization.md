@@ -17,7 +17,7 @@ The following diagram illustrates the Windows authorization and access control 
 ### Security identifiers
 
 Each time a user signs in, the system creates an access token for that user. The access token contains the user’s SID, user rights, and the SIDs for groups that the user belongs to. This token provides the security context for whatever actions the user performs on that computer.
-[More Details Here](%2E/SIDs)
+[More Details Here](%2E/SIDs.md)
 ### Access tokens
 
 An access token is a protected object that contains information about the identity and user rights that are associated with a user account.

@@ -1,10 +1,12 @@
 ### Content
 
-- [Protections Enumeration](#protections-enumeration)
-- [Users and Groups Enumeration](#users-and-groups-enumeration)
-- [Environment Enumeration](#environment-enumeration)
+- [Protections](#protections)
+- [Users and Groups](#users-and-groups)
+- [Environment](#environment)
 - [Services and Processes](#services-and-processes)
 - [Network](#network)
+	- [Network Tips](#network-tips)
+- [Applications](#applications)
 
 ---
 
@@ -18,7 +20,8 @@
 > - A standard (non-privileged) domain user who is part of the local `Administrators` group.
 > - A domain admin that is part of the local Administrators group.
 
-### Protections  Enumeration
+---
+### Protections
 
 ``` powershell
 # Check Windows Defender Status
@@ -32,9 +35,15 @@ C:\> Get-AppLockerPolicy -Local | Test-AppLockerPolicy -path C:\Windows\System32
 
 # Get Password Policy & Other Account Information
 C:\> net accounts
+
+# Examine last installed updates
+PS C:\> systeminfo
+PS C:\>cmd /c wmic qfe list brief
+PS C:\> Get-Hotfix
 ```
 
-### Users and Groups Enumeration
+---
+### Users and Groups
 
 ```PowerShell
 # Current User
@@ -57,29 +66,55 @@ C:\> net localgroup <groupName>
 C:\> Get-ADGroupMember -Identity <groupName>
 ```
 
-### Environment Enumeration
+---
+### Environment
 
 ```PowerShell
 # Display All Environment Variables
-C:\> cmd.exe /c set
+C:\> set
+PS C:\> Get-ChildItem Env:
 
 # System Info
 C:\> systeminfo
 
+# Reviewing Path Variable
+C:\> echo %PATH%
+PS C:\> echo $Env:PATH
+
 # Display System Hotfixes
 C:\> wmic qfe
-C:\> Get-HotFix | ft -AutoSize
+PS C:\> Get-HotFix | ft -AutoSize
 
 # Installed Programs
-C:\> wmic product get name
-C:\> Get-WmiObject -Class Win32_Product |  select Name, Version
+PS C:\> wmic product get name
+PS C:\> Get-WmiObject -Class Win32_Product |  select Name, Version
+
+# Checking Windows Version
+PS C:\> [environment]::OSVersion.Version
 ```
 
+---
 ### Services and Processes
 
 ```PowerShell
 # List running processes
 C:\> tasklist /svc
+C:\> get-process 
+# To search for a specific process
+C:\> get-process -ProcessName "*sl*" -Id 13132
+
+# List avaiable services
+C:\> Get-Service | Where-Object {$_.Status -eq "Running"}
+C:\> Get-Service | ? {$_.DisplayName -like 'Druva*'}
+C:\> sc query
+# More formated html table output with wmic (open it in browser)
+C:\> wmic service get * /format:htable > services.html
+# Get specific properties
+C:\> wmic service get name,startname
+# started services only
+C:\> wmic service where started=true get  name, startname
+# Specific pattern name
+C:\> wmic service where 'name like "%sql%"' get  name, startname
 
 ######## Named Pipes #########
 # Using pipelist from Sysinternals
@@ -95,6 +130,7 @@ C:\> accesschk.exe /accepteula \\.\Pipe\lsass -v
 C:\> accesschk.exe /accepteula \pipe\SQLLocal\SQLEXPRESS01 -v
 ```
 
+---
 ### Network
 
 ``` powershell
@@ -110,7 +146,7 @@ C:\> route print
 # Active TCP and UDP connections
 C:\> netstat -ano
 # You can see the PID in the output
-# List running processes to map the PID to an executable
+# List running processes to map the PID to an executable (get-process -Id 3324)
 # Instead, you can use -b to resolve the executable name if you are admin
 ```
 
@@ -121,3 +157,17 @@ C:\> netstat -ano
 	- `Splunk Universal Forwarder`, installed on endpoints to send logs into Splunk. For more information, check out [Splunk Universal Forwarder Hijacking](https://airman604.medium.com/splunk-universal-forwarder-hijacking-5899c3e0e6b2) and [SplunkWhisperer2](https://clement.notin.org/blog/2019/02/25/Splunk-Universal-Forwarder-Hijacking-2-SplunkWhisperer2/).
 	- `Erlang Port` (25672). Erlang is a programming language designed around distributed computing and will have a network port that allows other Erlang nodes to join the cluster. The secret to join this cluster is called a cookie.
 		- Many applications that utilize Erlang will either use a weak cookie (RabbitMQ uses `rabbit` by default) or place the cookie in a configuration file that is not well protected. Some example Erlang applications are SolarWinds, RabbitMQ, and CouchDB. For more information check out the [Erlang-arce blogpost from Mubix](https://malicious.link/post/2018/erlang-arce/)
+
+---
+### Applications
+
+```PowerShell
+# Read the Windows registry to collect more granular information about installed programs.
+PS C:\> $INSTALLED = Get-ItemProperty HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\* |  Select-Object DisplayName, DisplayVersion, InstallLocation
+PS C:\> $INSTALLED += Get-ItemProperty HKLM:\Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\* | Select-Object DisplayName, DisplayVersion, InstallLocation
+PS C:\> $INSTALLED | ?{ $_.DisplayName -ne $null } | sort-object -Property DisplayName -Unique | Format-Table -AutoSize
+
+# Using CMD we can list the 'Program Files' and 'Program Files (x86)' to find the installed apps
+C:\> dir "C:\Program Files"
+C:\> dir "C:\Program Files (x86)"
+```

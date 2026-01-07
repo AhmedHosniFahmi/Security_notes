@@ -32,7 +32,7 @@ C:\> sc.exe sdshow DNS
 D:(A;;CCLCSWLOCRRC;;;IU)(A;;CCLCSWLOCRRC;;;SU)(A;;CCLCSWRPWPDTLOCRRC;;;SY)(A;;CCDCLCSWRPWPDTLOCRSDRCWDWO;;;BA)(A;;CCDCLCSWRPWPDTLOCRSDRCWDWO;;;SO)(A;;RPWP;;;S-1-5-21-669053619-2741956077-1013132368-1109)S:(AU;FA;CCDCLCSWRPWPDTLOCRSDRCWDWO;;;WD)
 ```
 
-Per this [note](%2E%2E/%2E%2E/%2E%2E/%2E%2E/Operating%20Systems/Windows/SDDL), we can see that our user has `RPWP` permissions which translate to `SERVICE_START` and `SERVICE_STOP`, respectively.
+Per this [note](%2E%2E/%2E%2E/%2E%2E/%2E%2E/Operating%20Systems/Windows/SDDL.md), we can see that our user has `RPWP` permissions which translate to `SERVICE_START` and `SERVICE_STOP`, respectively.
 
 ---
 ### DnsAdmins Abuse Through Malicious DLL

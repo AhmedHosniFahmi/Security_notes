@@ -1,8 +1,7 @@
 
 > [!Important]
 > - [Payloads All The Things - Windows Privilege Escalation cheat sheet](https://github.com/swisskyrepo/PayloadsAllTheThings/blob/master/Methodology%20and%20Resources/Windows%20-%20Privilege%20Escalation.md)
-
-
+> - [Internal All The Things - Windows EoP](https://swisskyrepo.github.io/InternalAllTheThings/redteam/escalation/windows-privilege-escalation/)
 
 | Tool                                                                                                     | Description                                                                                                                                                                                                                                                                                                               |
 | -------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |

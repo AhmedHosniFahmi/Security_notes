@@ -6,6 +6,8 @@
 	- [Using PrintSpoofer](#using-printspoofer)
 	- [Using RoguePotato](#using-roguepotato)
 
+> SeImpersonate ~= SeAssignPrimaryToken
+
 ---
 #### Overview
 

@@ -1,6 +1,9 @@
 ### Content
 
-
+- [Overview](#overview)
+- [AppReadiness Service Abuse](#appreadiness-service-abuse)
+	- [Checking service's privileges](#checking-service's-privileges)
+	- [Abusing the privileges](#abusing-the-privileges)
 
 ---
 #### Overview
@@ -13,7 +16,7 @@ Membership of this group gives `SeBackupPrivilege` and `SeRestorePrivilege` priv
 ---
 ### AppReadiness Service Abuse 
 
-#### Checking the service privileges
+#### Checking service's privileges
 
 Confirm that this service starts as SYSTEM using the sc.exe utility.
 
@@ -114,3 +117,5 @@ server_adm
 ```
 
 Now we can use `secretsdump.py` to dump retrieve NTLM hashes from the domain controller.
+
+---

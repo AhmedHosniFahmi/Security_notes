@@ -2,8 +2,7 @@
 
 - [Enabling Disabled Privileges](#enabling-disabled-privileges)
 - [Built-In Groups](#built-in-groups)
-- [Bypassing UAC Using UACME](#bypassing-uac-using-uacme)
-- 
+- [Access Rights for a Service](#access-rights-for-a-service)
 
 > [!Note]
 > 
@@ -67,13 +66,6 @@ More groups and their description
 | Group Policy Creator Owners | Members can create new GPOs but would need to be delegated additional permissions to link GPOs to a container such as a domain or OU.                                                                                                                                                                                                                                                                         |
 | Schema Admins               | Members can modify the Active Directory schema structure and backdoor any to-be-created Group/GPO by adding a compromised account to the default object ACL.                                                                                                                                                                                                                                                  |
 | DNS Admins                  | Members can load a DLL on a DC, but do not have the necessary permissions to restart the DNS server. They can load a malicious DLL and wait for a reboot as a persistence mechanism. Loading a DLL will often result in the service crashing. A more reliable way to exploit this group is to [create a WPAD record](https://web.archive.org/web/20231115070425/https://cube0x0.github.io/Pocing-Beyond-DA/). |
-
----
-## Bypassing UAC Using UACME
-
-The [UACMe](https://github.com/hfiref0x/UACME) repo features a comprehensive list of UAC bypasses, which can be used from the command line.
-
-See this [Video](https://www.youtube.com/watch?v=RXX0FHM9SEk) illustrating how to use it.
 
 ---
 ## Access Rights for a Service

