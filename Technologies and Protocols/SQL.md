@@ -287,7 +287,7 @@ mysql> SELECT grantee,privilege_type FROM information_schema.user_privileges WHE
 - **A certain directory is set**, we can only read from the folder specified by the variable.
 - **NULL** means we cannot read/write from any directory.
 
-> [!Notes]
+> [!Note]
 > - MariaDB has this variable set to empty by default, which lets us read/write to any file if the user has the FILE privilege.
 > - `MySQL` uses `/var/lib/mysql-files` as the default folder.
 
