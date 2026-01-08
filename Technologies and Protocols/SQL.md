@@ -11,6 +11,7 @@
 	- [Schemata Table](#schemata-table)
 	- [Tables table](#tables-table)
 	- [Columns Table](#columns-table)
+	- [Global Variable Table](#global-variable-table)
 - [Files Operations](#files-operations)
 
 > [!Note]
@@ -268,6 +269,8 @@ MariaDB [(none)]> SELECT variable_name, variable_value FROM information_schema.g
 
 ### Files Operations
 
+At first we should learn about the `File` privilege and the `secure_file_priv` environment variable:
+
 `FILE` permission may enable us to read files and potentially even write files.
 
 ```SQL
@@ -298,7 +301,7 @@ mysql> SHOW VARIABLES LIKE 'secure_file_priv';
 mysql> SELECT variable_name, variable_value FROM information_schema.global_variables where variable_name="secure_file_priv";
 ```
 
-### Reading Files
+#### Reading Files
 
 The [LOAD_FILE()](https://mariadb.com/kb/en/load_file/) function can be used in MariaDB / MySQL to read data from files. The function takes in just one argument, which is the file name.
 
@@ -311,7 +314,7 @@ SELECT LOAD_FILE('/etc/passwd');
 > 
 > You can see the results by viewing the page source code.
 
-### Writing Files
+#### Writing Files
 
 To be able to write files to the back-end server using a MySQL database, we require three things:
 
