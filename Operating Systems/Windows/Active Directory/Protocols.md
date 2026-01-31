@@ -34,18 +34,18 @@ sequenceDiagram
     
 	Note over Client,AS: AS-REQ
     rect rgb(255,255,255)
-    Client-)AS: [1] TGT Ticket (Client's identity, Timestamp)
-    Note over Client,AS: Encrypted using client hash
-    Note over AS: Decrypt TGT Ticket using client hash 
+    Client-)AS: [1] TGT Ticket (Client name, Timestamp)
+    Note over Client,AS: EK(client hash)
+    Note over AS: DK(Client hash) 
     end
     
     Note over Client,AS: AS-REP
     rect rgb(255,255,255)
-    AS--)Client: [2] TGT (Client's identity, Expiration time, Session key)
-    Note over AS,Client: Encrypted using TGS secret
+    AS--)Client: [2] TGT (Client identity, Expiration time, Session key)
+    Note over AS,Client: EK(KDC secret)
     
 	AS--)Client: [3] (Session key)
-    Note over AS,Client: Encrypted using client hash
+    Note over AS,Client: EK(Client hash)
     Note over Client: Decrypt session key using the client hash
     Note over Client: Create authenticator (Client's identity)
     Note over Client: Encrypt authenticator using session key
@@ -53,27 +53,27 @@ sequenceDiagram
     
     Note over Client,TGS: TGS-REQ
     rect rgb(255,255,255)
-    Client-)TGS: [4] TGS Ticket (TGT(Client's identity, Expiration time, Session key), Service Name) + (Authenticator)
-    Note over TGS: Decrypt TGT using TGS secret (extract session key)
+    Client-)TGS: [4] TGS Ticket (TGT(Client's identity, Expiration time, Session key), SPN) + (Authenticator)
+    Note over TGS: Decrypt TGT using KDC secret (extract session key)
     Note over TGS: Decrypt authenticator using extracted session key
     Note over TGS: Check TGT identity and authenticator identity
     end
     
     Note over Client,TGS: TGS-REP
     rect rgb(255,255,255)
-    TGS--)Client: [5] TGS (Client's identity, New Session key)
-    Note over TGS,Client: Encrypted with Service's Secret
+    TGS--)Client: [5] TGS (SPN, Client's identity, New Session key)
+    Note over TGS,Client: EK(Service's Secret)
     
 	TGS--)Client: [6] (New Session key)
-    Note over TGS,Client: Encrypted usig old session key from [3]
+    Note over TGS,Client: EK(Old session key from [3])
 	Note over Client: Decrypt new session key using the old one
     Note over Client: Create authenticator (client's identity)
     Note over Client: Encrypt authenticator using new session key
     end
     
-    Note over Client,Service: AP-REQ
+    Note over Client,Service: (Application)AP-REQ
     rect rgb(255,255,255)
-    Client-)Service: [7] TGS (New Session key, Client's Identity) + (Authenticator)
+    Client-)Service: [7] TGS (SPN, Client's identity, New Session key) + (Authenticator)
     Note over Service: Decrypt TGS
     Note over Service: Decrypt Authenticator
     Note over Service: Compare Identities
