@@ -1,6 +1,8 @@
 ### Content
+
 - [What is a trust](#what-is-a-trust)
 - [Enumeration](#enumeration)
+
 ---
 ## What is a trust
 

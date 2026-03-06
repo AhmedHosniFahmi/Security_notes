@@ -27,7 +27,9 @@ $ sudo nmap -v -A -iL hosts.txt -oN output.txt
 ```
 ---
 ## Internal AD Username Enumeration
+
 Gathering usernames list for the password spray can be done with several ways:
+
 - Leverage `SMB NULL session` to retrieve a complete list of domain users from the domain controller.
 - Leverage `LDAP anonymous bind` to query LDAP anonymously and pull down the domain user list.
 - Use `Kerbrute` to validate users utilizing a word list
@@ -47,7 +49,11 @@ $ cat rpc-output | cut -f2 -d "[" | cut -f1 -d "]" > clean-rpc-output
 $ crackmapexec smb 172.16.5.5 --users
 
 # Abuse LDAP Anonymous bind
-$ ldapsearch -h 172.16.5.5 -x -b "DC=INLANEFREIGHT,DC=LOCAL" -s sub "(&(objectclass=user))"  | grep sAMAccountName: | cut -f2 -d" "
+$ ldapsearch -H ldap://172.16.5.5 -x   -b "DC=baby,DC=vl"  -s sub "(objectclass=user)" | grep sAMAccountName: | awk '{print $f}'
+
+$ ldapsearch -H ldap://172.16.5.5 -x   -b "DC=baby,DC=vl" -s sub "(sAMAccountName=*)" description sAMAccountName userPrincipalName
+
+$ ldapsearch -H ldap://10.129.1.62 -x -b "DC=baby,DC=vl" "*" | grep '#'
 
 $ ./windapsearch.py --dc-ip 172.16.5.5 -u "" -U
 ```

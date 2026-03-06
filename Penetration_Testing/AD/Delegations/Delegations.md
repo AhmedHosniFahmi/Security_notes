@@ -51,14 +51,13 @@ Why not (NTLM hash) delegation is not an optimal solution:
 	- The are trusted by default and not verified by a DC on each access as the TGS is encrypted with the service hash itself.
 - Having Tickets and session keys cached in a server is less riskier having NTLM hashes
 
-
 ## Unconstrained Delegation
 
 - If unconstrained delegation is configured in the service, the client delegated a copy of his TGT to the service server.
 - The service then can act on behalf  of the client in the network by using his TGT.
 - Setting up this delegation requires domain or enterprise admin privileges. `SeEnableDelegation`
 
-- If an attacker got control over that service machine, it's possible to dump all the TGTs in the memory.
+If an attacker got control over that service machine, it's possible to dump all the TGTs in the memory.
 
 > Set up unconstrained delegation on a service
 

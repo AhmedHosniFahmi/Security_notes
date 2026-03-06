@@ -1,15 +1,21 @@
 ### Content
+
 - [Enumerate DCSync attack using PowerView](#enumerate-dcsync-attack-using-powerview)
 - [DCSync attack with secretsdump](#dcsync-attack-with-secretsdump)
 - [DCSync attack with mimikatz](#dcsync-attack-with-mimikatz)
+
 ---
+
 - DCSync is a technique used to request the passwords of any user from a domain controller through the replication protocol (DRSUAPI) `Directory Replication Service Remote Protocol`.
 - It is used by Domain Controllers to replicate domain data including the Active Directory password database. 
 - This requires `DS-Replication-Get-Changes-All` and `DS-Replication-Get-Changes` permissions on the domain object
 - The attack is beneficial to retrieve the current NTLM password hash for any domain user and the hashes corresponding to their previous passwords.
+
 <img src="/assets/adnunn_right_dcsync.webp" width="65%" height="70%" style="display: block; margin:auto;">
+
 ---
 #### Enumerate DCSync attack using PowerView
+
 ``` PowerShell
 # The user that we are in control of
 PS C:\> $sid = Convert-NameToSid adunn
@@ -64,10 +70,8 @@ inlanefreight_hashes.ntds  inlanefreight_hashes.ntds.cleartext  inlanefreight_ha
 ---
 #### DCSync attack with mimikatz
 
-Using Mimikatz, we must target a specific user.
-Here we will target the built-in administrator account.
+Running in the context of the user who has DCSync privileges. We can utilize `runas.exe` to accomplish this:
 
-Mimikatz must be ran in the context of the user who has DCSync privileges. We can utilize `runas.exe` to accomplish this:
 ``` CMD
 C:\Windows\system32>runas /netonly /user:INLANEFREIGHT\adunn powershell
 ```

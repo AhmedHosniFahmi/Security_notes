@@ -1,4 +1,5 @@
 ### Content
+
 1. [From Linux Host](#from-linux-host)
 	- [Crackmapexec or NetExec](#crackmapexec-or-netexec)
 	- [SMBMap](#smbmap)
@@ -16,10 +17,30 @@
 	- [WMI](#wmi)
 	- [NET](#net)
 	- [Dsquery](#dsquery)
+
+> [!Note]
+> Enumerate the domain DCs:
+> 
+> - Using PowerShell `ActiveDirectory` module
+> 
+> `Get-ADDomainController -filter * | select IPv4Address` 
+> 
+> - Using native PowerShell
+> 
+> `[System.DirectoryServices.ActiveDirectory.Domain]::GetCurrentDomain().DomainControllers | select IPAddress`
+> 
+> - Using `Nslookup` (will work if the DC runs DNS)
+> 
+> `nslookup`
+> `Set type=all`
+> `_ldap._tcp.dc._msdcs.DOMAIN.COM`
+
+
 ---
 # From Linux Host
 
-#### Crackmapexec or NetExec  
+#### Crackmapexec or NetExec
+
 ``` bash
 # Domain User Enumeration (retrieve a list of all domain users).
 $ sudo crackmapexec smb 172.16.5.5 -u username -p password --users
@@ -35,6 +56,7 @@ $ sudo crackmapexec smb 172.16.5.5 -u username -p password --shares
 ```
 
 #### SMBMap
+
 ``` bash
 # Shares enumeartion
 $ smbmap -u username -p password -d DOMAIN.LOCAL -H 172.16.5.5
@@ -43,6 +65,7 @@ $ smbmap -u username -p password -d DOMAIN.LOCAL -H 172.16.5.5
 ```
 
 #### rpcclient
+
 ``` bash
 # Abuse SMB NULL session
 $ rpcclient -U "" -N 172.16.5.5
@@ -56,6 +79,7 @@ rpcclient $> queryuser 0x1f4
 ```
 
 #### Impacket Toolkit
+
 ``` bash
 # To connect to a host with psexec.py, we need credentials for a user with local administrator privileges.
 # psexec.py utilizes an interactive shell
@@ -67,6 +91,7 @@ $ wmiexec.py domain.local/username:'password'@IP
 ```
 
 #### Windapsearch
+
 ``` bash
 # Enumerate domain admins group members
 $ python3 windapsearch.py --dc-ip 172.16.5.5 -u user@domain.local -p password --da
@@ -77,14 +102,20 @@ $ python3 windapsearch.py --dc-ip 172.16.5.5 -u user@domain.local -p password -P
 ---
 # From Windows Host
 #### ActiveDirectory Module
+
 [ActiveDirectory PowerShell module ](https://docs.microsoft.com/en-us/powershell/module/activedirectory/?view=windowsserver2022-ps)
+
 ``` Powershell
 # Check whether the module is imported and import it if not
 PS C:\Users> get-module
+# If it's not there, install its sub feature
+PS C:\Users> Install-WindowsFeature -Name "RSAT-AD-PowerShell" -IncludeAllSubFeature
 # Import it if it's not imported
 PS C:\Users> import-module ActiveDirectory
 # Get Domain Info
 PS C:\Users> Get-ADDomain
+# Search for a user by a specific Properity
+PS C:\Users> Get-ADUser -Filter {samAccountName -like "todd.wolfe"} | select *
 # Extract all domain admin privileged users accounts
 PS C:\Users> Get-ADUser -Filter * -Properties adminCount | Where-Object { $_.adminCount -eq 1 }
 # filtering for accounts with the ServicePrincipalName property populated.
@@ -106,6 +137,7 @@ PS C:\Users> Get-ADUser -Filter 'userAccountControl -band 128' -Properties userA
 
 #### PowerView
 [PowerView](https://github.com/PowerShellMafia/PowerSploit/tree/master/Recon)
+
 ``` Powershell
 # Information of a specific user in a specific domain
 PS C:\Users> Get-DomainUser -Identity mmorgan -Domain inlanefreight.local
@@ -131,14 +163,18 @@ PS C:\Users> .\SharpView.exe Get-DomainUser -Identity forend
 ```
 
 #### Snaffler
+
 [Snaffler](https://github.com/SnaffCon/Snaffler) is a tool that can help us acquire credentials or other sensitive data in an Active Directory environment.
 works by obtaining a list of hosts within the domain and then enumerating those hosts for shares and readable directories.
 Once that is done, it iterates through any directories readable by our user and hunts for files that could serve to better our position within the assessment.
+
 ``` Powershell
 PS C:\Users> Snaffler.exe -s -d inlanefreight.local -o snaffler.log -v data
 ```
+
 ---
 # Living Off the Land
+
 The techniques here for testing AD environment from a managed `Windows` host with no internet access, and all efforts to load tools onto it have failed.
 #### Basic Enumeration
 
@@ -166,6 +202,7 @@ The techniques here for testing AD environment from a managed `Windows` host wit
 | `qwinsta`                                                                                                                  | (Query WINdows STAtion) shows current sessions on the host.                                                                                                                                                                                   |
 
 #### Network Enumeration
+
 | **Networking Commands**              | **Description**                                                                                                  |
 | ------------------------------------ | ---------------------------------------------------------------------------------------------------------------- |
 | `arp -a`                             | Lists all known hosts stored in the arp table.                                                                   |
@@ -174,6 +211,7 @@ The techniques here for testing AD environment from a managed `Windows` host wit
 | `netsh advfirewall show allprofiles` | Displays the status of the host's firewall. We can determine if it is active and filtering traffic.              |
 
 #### WMI
+
 [Windows Management Instrumentation (WMI)](https://docs.microsoft.com/en-us/windows/win32/wmisdk/about-wmi)
 This [cheatsheet](https://gist.github.com/xorrior/67ee741af08cb1fc86511047550cdaf4) has some useful commands for querying host and domain info using wmic.
 
@@ -189,6 +227,7 @@ This [cheatsheet](https://gist.github.com/xorrior/67ee741af08cb1fc86511047550cda
 | `wmic ntdomain get Caption,Description,DnsForestName,DomainName,DomainControllerAddress` | Information about the domain and the child domain, and the external forest that our current domain has a trust with. |
 
 #### NET
+
 [Net](https://docs.microsoft.com/en-us/windows/win32/winsock/net-exe-2)
 
 | **Command**                                     | **Description**                                                                                                              |
@@ -213,7 +252,7 @@ This [cheatsheet](https://gist.github.com/xorrior/67ee741af08cb1fc86511047550cda
 | `net use x: \computer\share`                    | Mount the share locally                                                                                                      |
 | `net view`                                      | Get a list of computers                                                                                                      |
 | `net view /all /domain[:domainname]`            | Shares on the domains                                                                                                        |
-| `net view \computer /ALL`                       | List shares of a computer                                                                                                    |
+| `net view \\computer /ALL`                      | List shares of a computer                                                                                                    |
 | `net view /domain`                              | List of PCs of the domain                                                                                                    |
 
 > [!Important]
@@ -222,6 +261,7 @@ This [cheatsheet](https://gist.github.com/xorrior/67ee741af08cb1fc86511047550cda
 > `net view` --> `net1 view`
 
 #### Dsquery
+
 [Dsquery](https://docs.microsoft.com/en-us/previous-versions/windows/it-pro/windows-server-2012-r2-and-2012/cc732952(v=ws.11)) will exist on any host with the `Active Directory Domain Services Role` installed, and the `dsquery` DLL exists on all modern Windows systems by default now and can be found at `C:\Windows\System32\dsquery.dll`.
 
 All we need is `elevated privileges` on a host or the ability to run an instance of Command Prompt or PowerShell from a `SYSTEM` context.
@@ -238,6 +278,7 @@ PS C:\> dsquery * "CN=Users,DC=INLANEFREIGHT,DC=LOCAL"
 ```
 
 Combine `dsquery` with LDAP filters.
+
 ``` PowerShell
 # Users With Specific Attributes Set (PASSWD_NOTREQD) -> password not required
 PS C:\> dsquery * -filter "(&(objectCategory=person)(objectClass=user)(userAccountControl:1.2.840.113556.1.4.803:=32))" -attr distinguishedName userAccountControl

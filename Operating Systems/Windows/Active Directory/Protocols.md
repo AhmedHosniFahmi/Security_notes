@@ -34,7 +34,7 @@ sequenceDiagram
     
 	Note over Client,AS: AS-REQ
     rect rgb(255,255,255)
-    Client-)AS: [1] TGT Ticket (Client name, Timestamp)
+    Client-)AS: [1] TGT Ticket (Client name, (Timestamp))
     Note over Client,AS: EK(client hash)
     Note over AS: DK(Client hash) 
     end

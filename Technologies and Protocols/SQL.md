@@ -240,8 +240,7 @@ MariaDB [information_schema]> SELECT table_name, table_schema FROM INFORMATION_S
 The [COLUMNS](https://dev.mysql.com/doc/refman/8.0/en/information-schema-columns-table.html) table contains information about all columns present in all the databases. This helps us find the column names to query a table for. The `COLUMN_NAME`, `TABLE_NAME`, and `TABLE_SCHEMA` columns can be used to achieve this.
 
 ```SQL
-MariaDB [information_schema]> SELECT column_name, table_name, table_schema from information_schema.columns WHERE table_name='d
-ept_manager';
+MariaDB [information_schema]> SELECT column_name, table_name, table_schema from information_schema.columns WHERE table_name='dept_manager';
 +-------------+--------------+--------------+
 | column_name | table_name   | table_schema |
 +-------------+--------------+--------------+
