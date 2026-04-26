@@ -22,6 +22,7 @@
 	- [OS Command Execution](#os-command-execution)
 
 > [Project Wiki](https://github.com/sqlmapproject/sqlmap/wiki/Usage)
+> Use the flag `--force-ssl`
 
 ---
 ### Tuning
