@@ -1,10 +1,11 @@
 ### Content
+
 - [Transfer Files Technique](#transfer-files-technique)
 - [Hash Crack Technique](#hash-crack-technique)
 - [Checking Privileges](#checking-privileges)
 - [SAM Attacks](#sam-attacks)
 - [LSASS Attacks](#lsass-attacks)
-- [NTDS.dit Attacks](#ntds.dit-attacks)
+- [NTDS File Attacks](#ntds-file-attacks)
 
 ---
 ##### Transfer Files Technique
@@ -90,9 +91,9 @@ Pulling hashes from memory by dumping the `lsass.exe` process memory.
 > `crackmapexec smb <IP> --local-auth -u <Username> -p <Password> --lsa`
 
 ---
-## NTDS.dit Attacks 
+## NTDS File Attacks 
 
-See [This](%2E%2E/%2E%2E/PE/Windows/Groups%20Priv/Backup%20Operators.md#Copying%20NTDS%2Edit)
+See [This](%2E%2E/%2E%2E/PE/Windows/Groups%20Priv/Backup%20Operators.md#Copying%20NTDS%20File)
 
 Extracting hashes from the NTDS database (ntds.dit) on a **Domain Controller**.
 

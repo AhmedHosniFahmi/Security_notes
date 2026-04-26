@@ -3,6 +3,7 @@
 - [Built-in SPNs Recognized for Computer Accounts](#built-in-spns-recognized-for-computer-accounts)
 - [Enumeration](#enumeration)
 - [From Windows](#from-windows)
+- [From Linux](#from-linux)
 
 ---
 
@@ -10,8 +11,7 @@
 > 
 > If the `impersonated` account is [is sensitive and cannot be delegated](https://learn.microsoft.com/en-us/windows-server/identity/ad-ds/manage/how-to-configure-protected-accounts) or a member of the [Protected Users](https://learn.microsoft.com/en-us/windows-server/security/credentials-protection-and-management/protected-users-security-group) group, the delegation will fail.
 > 
-> The RID 500, "Administrator" account doesn't benefit from that restriction, even if it's added to the Protected Users group (source: [sensepost.com](https://sensepost.com/blog/2023/protected-users-you-thought-you-were-safe-uh/)).
-> 
+> For RID 500, "Administrator" you need to tick the option “Account is sensitive and cannot be delegated” in the account settings even if the RID500 account is in Protected Users. (source: [sensepost](https://sensepost.com/blog/2023/protected-users-you-thought-you-were-safe-uh/))
 
 
 <img src="/assets/constrained_delegation_cheat_sheet.png" style="display: block; margin:auto; height:600px;">
@@ -31,6 +31,8 @@
 
 ---
 ### Enumeration
+
+From a Windows host
 
 ```PowerShell
 # Powerview
@@ -54,8 +56,8 @@ findDelegation.py corp.local/sAMAccountName:Password -dc-ip <dcIP>
 If an attacker compromised a host or an account that has constrained delegation set:
 
 - Abuse Any Service:
-	- The TGS has un unencrypted part which is the SPN of the requested service, which means that an attacker can modify this part without invalidating the ticket
-	- Because in constrained delegation, the delegation is only allowed for a specific list of SPNs.
+	- The TGS has un unencrypted part which is the SPN of the requested service, which means that an attacker can modify this part without invalidating the ticket.
+	- Delegation is allowed for the list of SPNs that is tied to the service account.
 		- If the target service account expose more than one service, the attacker can change the SPN to access a different service exposed by this account.
 		- Attacker also can relay the target TGS to request another TGS for another service using `S4U2Proxy` extension.
 - Impersonate Any User:
@@ -102,5 +104,5 @@ Scenario:
 ```bash
 $ getST.py -spn TERMSRV/DC01 'CORP.LOCAL/beth:password' -impersonate Administrator
 
-$ psexec.py -k -no-pass INLANEFREIGHT.LOCAL/administrator@DC01
+$ psexec.py -k -no-pass CORP.LOCAL/administrator@DC01
 ```

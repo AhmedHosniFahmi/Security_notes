@@ -19,11 +19,9 @@
 ``` PowerShell
 # The user that we are in control of
 PS C:\> $sid = Convert-NameToSid adunn
-PS C:\> $sid
-S-1-5-21-3842939050-3880317879-2865463114-1164
 
 # Check adunn's Replication Rights [DS-Replication-Get-Changes, DS-Replication-Get-Changes-All]
-# "<Domain_Object_Distinguished_Name>" = "DC=INLANEFREIGHT,DC=LOCAL"
+# "<Domain_Object_Distinguished_Name>" = "DC=CORP,DC=LOCAL"
 PS C:\> Get-ObjectAcl "<Domain_Object_Distinguished_Name>" -ResolveGUIDs | ? { ($_.ObjectAceType -match 'Replication-Get')} | ?{$_.SecurityIdentifier -match $sid} |select AceQualifier, ObjectDN, ActiveDirectoryRights,SecurityIdentifier,ObjectAceType | fl
 
 ......[SNIP]......

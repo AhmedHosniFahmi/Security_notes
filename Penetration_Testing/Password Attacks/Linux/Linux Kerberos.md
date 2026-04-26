@@ -11,7 +11,7 @@
 - [From ccache file to kirbi file](#from-ccache-file-to-kirbi-file)
 - [Linikatz](#linikatz)
 
-> [!Notes]
+> [!Note]
 > A Linux machine can be connected to AD. In that case, we could try to find Kerberos tickets to impersonate other users and gain more access to the network, even if it's not connected to AD, it could use Kerberos tickets in scripts or to authenticate to the network.
 
 ---

@@ -1,4 +1,5 @@
 ### Content
+
 - [Double Hop Problem](#double-hop-problem)
 - [Credential Delegation](#credential-delegation)
 - [Kerberos Delegation](#kerberos-delegation)
@@ -6,9 +7,7 @@
 	- [Constrained Delegation](#constrained-delegation)
 	- [Resource-Based Constrained Delegation](#resource-based-constrained-delegation)
 
-> [!Important]
-> Resources: 
-> - [ATTL4S](https://attl4s.github.io/)
+> Resources: [ATTL4S](https://attl4s.github.io/)
 
 ---
 # Double Hop Problem
@@ -18,7 +17,7 @@
 	- If the first service is using a resource on another machine, we will fail because all the service has about us is a TGS.
 - On the contrary, when we use a password to authenticate, that NTLM hash is stored in our session and can be used elsewhere without issue.
 
-**The solutions are credential or kerberos delegation.**
+**The solutions are credential or Kerberos delegation.**
 
 ---
 # Credential Delegation

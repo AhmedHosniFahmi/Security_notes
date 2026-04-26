@@ -1,4 +1,5 @@
 ### Content
+
 - [Kerberos](#kerberos)
 - [LDAP](#ldap)
 - [MSRPC](#msrpc)
@@ -7,6 +8,7 @@
 	- [NT Hash (NTLM)](#nt-hash-(ntlm))
 	- [NTLMv1 (Net-NTLMv1)](#ntlmv1-(net-ntlmv1))
 	- [NTLMv2 (Net-NTLMv2)](#ntlmv2-(net-ntlmv2))
+
 ---
 # Kerberos
 Network-based authentication protocol that uses secret-key cryptography to verify the identity of users and services.
@@ -116,6 +118,7 @@ Windows systems use MSRPC to access systems in Active Directory using four key R
 
 ---
 # Authentication Methods
+
 - `LM` and `NTLM` here are the hash names.
 - `NTLMv1` and `NTLMv2` are authentication protocols that utilize the `LM` or `NT` hash.
 

