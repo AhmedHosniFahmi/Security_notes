@@ -3,7 +3,6 @@
 * [Overview](#overview)
 * [Identifying IDORs](#identifying-idors)
 
-
 ---
 ### Overview
 

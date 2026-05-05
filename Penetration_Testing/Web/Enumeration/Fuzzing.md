@@ -18,6 +18,8 @@
 > - `Content-Type:` header containing the data type we expect to get, ex:
 > 	- `text/plain` for text, `application/sql` for DB dump, `application/zip` for compressed file.
 > - `Content-Length:` A value greater than zero suggests a file with actual content.
+> 
+> Add cookie to ffuf using `-b "PHPSESSID=39b54j201u3rhu4tab1pvdb4pv"` -> `NAME1=VALUE1; NAME2=VALUE2`
 
 ---
 #### Directory fuzzing

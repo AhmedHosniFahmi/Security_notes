@@ -1,12 +1,17 @@
 ### Content
+
 * Tools:
-	* [[Hydra]]
-	* [[Medusa]]
+	* [Hydra](../../../Tools/Hydra)
+	* [Medusa](../../../Tools/Medusa)
 * [Custom Wordlists](#custom-wordlists)
 * [Edit a wordlist to be tailored to a specific policy with grep](#edit-a-wordlist-to-be-tailored-to-a-specific-policy-with-grep)
 * [HTB Module Answers](#htb-module-answers)
+
+> Create list from 0 to 1000 with padding zeros for same length: `seq -w 0 1000 > list.txt`
+
 ---
-## Edit a wordlist to be tailored to a specific policy with grep
+### Edit a wordlist to be tailored to a specific policy
+
 Suppose we have this policy:
 - Minimum length: 8 characters 
 - Must include:
@@ -14,28 +19,49 @@ Suppose we have this policy:
     - At least one lowercase letter 
     - At least one number
     - At least two special characters (from the set `!@#$%^&*`)
+
+`grep`
+
 ``` bash
  grep -E '^.{8,}$' old-wordlist.txt | grep -E '[A-Z]' | grep -E '[a-z]' | grep -E '[0-9]' | grep -E '([!@#$%^&*].*){2,}' > new-wordlist.txt
+ 
+ # If want to extract the alphanumeric values only
+ grep -E '^.{8,}$' old-wordlist.txt | grep -E '[A-Z]' | grep -E '[a-z]' | grep -E '[0-9]' | grep -v '[^a-zA-Z0-9]' > new_pass_list
 ```
+
+`awk`
+
+```bash
+awk 'length($0)>=8 && /[A-Z]/ && /[a-z]/ && /[0-9]/ && gsub(/[!@#$%^&*]/,"&")>=2' old-wordlist.txt > new-wordlist.txt
+```
+
 ---
-## Custom Wordlists
-* [Username Anarchy](https://github.com/urbanadventurer/username-anarchy.git) to create personalized username wordlists.
-	``` bash
-	sudo apt install ruby -y
-	git clone https://github.com/urbanadventurer/username-anarchy.git
-	./username-anarchy john doe > john_doe_usernames.txt
-	```
-* [CUPP](https://github.com/Mebus/cupp) to create personalized password wordlists.
-	``` bash
-	cupp -i
-	```
-- [CeWL](https://github.com/digininja/CeWL) to scan potential words from the company's website and save them in a wordlist.
-	``` bash
-	# -d : spider depth, -m : minimum word length, --lowercase : store the words found in lowercase
-	cewl https://www.inlanefreight.com -d 4 -m 6 --lowercase -w inlane.wordlist
-	```
+### Custom Wordlists
+
+[Username Anarchy](https://github.com/urbanadventurer/username-anarchy.git) to create personalized username wordlists.
+
+``` bash
+sudo apt install ruby -y
+git clone https://github.com/urbanadventurer/username-anarchy.git
+./username-anarchy john doe > john_doe_usernames.txt
+```
+
+[CUPP](https://github.com/Mebus/cupp) to create personalized password wordlists.
+
+``` bash
+cupp -i
+```
+
+[CeWL](https://github.com/digininja/CeWL) to scan potential words from the company's website and save them in a wordlist.
+
+``` bash
+# -d : spider depth, -m : minimum word length, --lowercase : store the words found in lowercase
+cewl https://www.inlanefreight.com -d 4 -m 6 --lowercase -w inlane.wordlist
+```
+
 ---
-## HTB Module Answers
+### HTB Module Answers
+
 * Q1
 	``` python
 	import requests
