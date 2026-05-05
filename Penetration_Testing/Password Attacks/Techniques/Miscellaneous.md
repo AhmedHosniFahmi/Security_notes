@@ -4,37 +4,54 @@
 - [Create Username Wordlists](#create-username-wordlists)
 - [Types of Brute Forcing](#types-of-brute-forcing)
 
+> [world-cities.csv](https://github.com/datasets/world-cities/blob/main/data/world-cities.csv "world-cities.csv")
+
 ---
 ### Credentials Stuffing
+
 Attacking services with the default or obtained credentials is called [Credential Stuffing](https://owasp.org/www-community/attacks/Credential_stuffing).
-- There are various databases that keep a running list of known default credentials. One of them is the [DefaultCreds-Cheat-Sheet](https://github.com/ihebski/DefaultCreds-cheat-sheet).
-	``` bash
-	$ pipx install defaultcreds-cheat-sheet
-	$ creds search tomcat
-	$ creads search tomcat export
-	```
+
+``` bash
+$ pipx install defaultcreds-cheat-sheet
+$ creds search tomcat
+$ creads search tomcat export
+```
+
+There are various databases that keep a running list of known default credentials:
 
 - [A list for default credentials for routers](https://www.softwaretestinghelp.com/default-router-username-and-password-list/)
+- [SecLists Default Credentials](https://github.com/danielmiessler/SecLists/tree/master/Passwords/Default-Credentials)
+- [CIRT.net](https://www.cirt.net/passwords) provide lists of default credentials for a wide variety of web applications.
+- [DefaultCreds-cheat-sheet](https://github.com/ihebski/DefaultCreds-cheat-sheet/blob/main/DefaultCreds-Cheat-Sheet.csv)
+- [SCADA](https://github.com/scadastrangelove/SCADAPASS/tree/master) GitHub repository
+
 ---
 ### Create Username Wordlists
-- [Username Anarchy](https://github.com/urbanadventurer/username-anarchy.git)
-	``` bash
-	# To create mutated names for one name
-	./username-anarchy john doe > john_doe_usernames.txt
-	# To create mutated names for list of names
-	./username-anarchy -i /home/ltnbob/names.txt  
-	```
-- [CUPP](https://github.com/Mebus/cupp)
-	```
-	cupp -i
-	```
-- [CeWL](https://github.com/digininja/CeWL)
-	``` bash
-	# depth to spider (-d)
-	# minimum length of the word (-m)
-	# The storage of the found words in lowercase (--lowercase), as well as the file where we want to store the results (-w).
-	cewl https://www.inlanefreight.com -d 4 -m 6 --lowercase -w inlane.wordlist
-	```
+
+[Username Anarchy](https://github.com/urbanadventurer/username-anarchy.git)
+
+``` bash
+# To create mutated names for one name
+./username-anarchy john doe > john_doe_usernames.txt
+# To create mutated names for list of names
+./username-anarchy -i /home/ltnbob/names.txt  
+```
+
+[CUPP](https://github.com/Mebus/cupp)
+
+```
+cupp -i
+```
+
+[CeWL](https://github.com/digininja/CeWL)
+
+``` bash
+# depth to spider (-d)
+# minimum length of the word (-m)
+# The storage of the found words in lowercase (--lowercase), as well as the file where we want to store the results (-w).
+cewl https://www.inlanefreight.com -d 4 -m 6 --lowercase -w inlane.wordlist
+```
+
 ---
 ### Types of Brute Forcing
 
