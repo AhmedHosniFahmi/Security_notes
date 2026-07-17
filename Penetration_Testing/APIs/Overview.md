@@ -1,11 +1,11 @@
 ### Content
 
 - [REST](#rest)
-	- [Identifying Endpoints](#identifying-endpoints)
+	- [Identifying REST Endpoints](#identifying-rest-endpoints)
 	- [Endpoints Structure and Parameters Types](#endpoints-structure-and-parameters-types)
 	- [Discovering REST Endpoints and Parameters](#discovering-rest-endpoints-and-parameters)
 - [SOAP](#soap)
-	- [Identifying Endpoints](#identifying-endpoints)
+	- [Identifying SOAP Endpoints](#identifying-soap-endpoints)
 	- [Endpoints Structure and Parameters](#endpoints-structure-and-parameters)
 	- [Discovering REST Endpoints and Parameters](#discovering-rest-endpoints-and-parameters)
 - [GraphQL](#graphql)
@@ -13,6 +13,8 @@
 	- [GraphQL Queries](#graphql-queries)
 	- [GraphQL Mutations](#graphql-mutations)
 	- [Discovering Queries and Mutations](#discovering-queries-and-mutations)
+
+> An application programming interface (API) is a set of rules that enables data transmission between different software. The technical specification of each API dictates the data exchange.
 
 ---
 ### REST
@@ -30,7 +32,7 @@ ex:
 GET /users/123
 ```
 
-#### Identifying Endpoints
+#### Identifying REST Endpoints
 
 - REST APIs are built around the concept of resources identified by (unique URLs) = (endpoints).
 - The endpoints are targeted by client requests, often with parameters.
@@ -55,26 +57,79 @@ GET /users/123
 ---
 ### SOAP
 
-SOAP (Simple Object Access Protocol) APIs rely on XML-based messages and Web Services Description Language (WSDL) files to define their interfaces and operations.
+SOAP (Simple Object Access Protocol) APIs rely on XML-based messages.
 
-- `XML` used to define messages, which are then encapsulated in `SOAP envelopes`.
-- Transmitted over network protocols like `HTTP` or `SMTP`.
-- Often include built-in security, reliability, and transaction management features, making them suitable for enterprise-level applications requiring strict data integrity and error handling.
+- All messages are written in XML and wrapped inside a SOAP Envelope.
+- Can run over multiple network protocols ex: `HTTP` or `SMTP`.
+- Supports built-in security, reliability, and transaction management features, suitable for strict data integrity and error handling.
+- WSDL (Web Services Description Language), An optional but common companion file that describes what operations a SOAP service exposes and how to call them. Think of it as the API's "manual."
 
-ex:
+Anatomy of a SOAP Message:
 
 ```XML
-<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:tem="http://tempuri.org/">
-   <soapenv:Header/>
-   <soapenv:Body>
-      <tem:GetStockPrice>
-         <tem:StockName>AAPL</tem:StockName>
-      </tem:GetStockPrice>
-   </soapenv:Body>
-</soapenv:Envelope>
+<soap:Envelope>          ← REQUIRED: Wrapper that marks this as SOAP (not plain XML)
+  <soap:Header>          ← OPTIONAL: Instructions for SOAP nodes (routing, auth, etc.)
+  </soap:Header>
+  <soap:Body>            ← REQUIRED: The actual request/response data + parameters
+    <soap:Fault>         ← OPTIONAL (inside Body): Error details if the call failed
+    </soap:Fault>
+  </soap:Body>
+</soap:Envelope>
 ```
 
-#### Identifying Endpoints
+Request example:
+
+```HTTP
+POST /userService HTTP/1.1
+Host: api.example.com
+Content-Type: text/xml; charset=utf-8
+Content-Length: 320
+SOAPAction: "http://example.com/GetUserDetails"
+
+<?xml version="1.0" encoding="utf-8"?>
+	<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"xmlns:usr="http://example.com/userservice">
+
+	  <soap:Header>
+	    <usr:AuthToken>eyJhbGciOiJIUzI1NiJ9.abc123</usr:AuthToken>
+	  </soap:Header>
+
+	  <soap:Body>
+	    <usr:GetUserDetails>
+	      <usr:UserID>1337</usr:UserID>
+	    </usr:GetUserDetails>
+	  </soap:Body>
+
+	</soap:Envelope>
+```
+
+Response example:
+
+```HTTP
+HTTP/1.1 200 OK
+Content-Type: text/xml; charset=utf-8
+Content-Length: 420
+
+<?xml version="1.0" encoding="utf-8"?>
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"
+               xmlns:usr="http://example.com/userservice">
+
+  <soap:Header>
+    <usr:ResponseTimestamp>2026-05-24T20:14:00Z</usr:ResponseTimestamp>
+  </soap:Header>
+
+  <soap:Body>
+    <usr:GetUserDetailsResponse>
+      <usr:UserID>1337</usr:UserID>
+      <usr:Username>reactor_engineer</usr:Username>
+      <usr:Email>engineer@reactor.htb</usr:Email>
+      <usr:Role>admin</usr:Role>
+    </usr:GetUserDetailsResponse>
+  </soap:Body>
+
+</soap:Envelope>
+```
+
+#### Identifying SOAP Endpoints
 
 - SOAP APIs typically expose a single endpoint.
 - This endpoint is a URL where the SOAP server listens for incoming requests.
